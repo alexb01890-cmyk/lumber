@@ -1,0 +1,256 @@
+import { defineObject, FieldType } from 'twenty-sdk/define';
+import { LUMBER_OBJECTS } from '../constants/lumber-objects';
+
+export default defineObject({
+  universalIdentifier: LUMBER_OBJECTS.orderLine.universalIdentifier,
+  nameSingular: 'lumberOrderLine',
+  namePlural: 'lumberOrderLines',
+  labelSingular: 'Order line',
+  labelPlural: 'Order lines',
+  icon: 'IconListDetails',
+  labelIdentifierFieldMetadataUniversalIdentifier:
+    LUMBER_OBJECTS.orderLine.fields.name,
+  fields: [
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.name,
+      name: 'name',
+      label: 'Name',
+      type: FieldType.TEXT,
+      icon: 'IconAbc',
+      isNullable: false,
+      defaultValue: "''",
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.status,
+      name: 'status',
+      label: 'Status',
+      type: FieldType.SELECT,
+      icon: 'IconList',
+      isNullable: false,
+      ...{
+        options: [
+          {
+            id: '60b63fa1-836a-4ab6-bcbe-bbff70f994cb',
+            value: 'DRAFT',
+            label: 'Draft',
+            color: 'gray',
+            position: 0,
+          },
+          {
+            id: '1f3287f5-c421-4dd0-b0e3-85cb0aaafc9c',
+            value: 'CONFIRMED',
+            label: 'Confirmed',
+            color: 'green',
+            position: 1,
+          },
+          {
+            id: '7f55b35d-1650-4881-bceb-3e1b9263cc42',
+            value: 'CANCELLED',
+            label: 'Cancelled',
+            color: 'red',
+            position: 2,
+          },
+        ],
+        defaultValue: "'DRAFT'",
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.description,
+      name: 'description',
+      label: 'Agreed product specification',
+      type: FieldType.TEXT,
+      icon: 'IconAbc',
+      isNullable: true,
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.quantity,
+      name: 'quantity',
+      label: 'Ordered quantity',
+      type: FieldType.NUMBER,
+      icon: 'IconNumber',
+      isNullable: true,
+      ...{
+        universalSettings: {
+          dataType: 'float',
+          decimals: 4,
+        },
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.quantityUnit,
+      name: 'quantityUnit',
+      label: 'Quantity unit',
+      type: FieldType.SELECT,
+      icon: 'IconList',
+      isNullable: true,
+      ...{
+        options: [
+          {
+            id: 'c4d90341-1a26-435b-a543-2a17a9f169de',
+            value: 'BOARD_FEET',
+            label: 'Board feet',
+            color: 'blue',
+            position: 0,
+          },
+          {
+            id: '2c5db419-a38b-444d-bac1-35e8bba83b39',
+            value: 'THOUSAND_BOARD_FEET',
+            label: 'Thousand board feet (MBF)',
+            color: 'sky',
+            position: 1,
+          },
+          {
+            id: '3813d77a-cf2b-419c-9674-a6bf9d31ea14',
+            value: 'LINEAR_FEET',
+            label: 'Linear feet',
+            color: 'green',
+            position: 2,
+          },
+          {
+            id: '9c86a1df-eb5d-433f-a5c9-429b101f4302',
+            value: 'PIECES',
+            label: 'Pieces',
+            color: 'purple',
+            position: 3,
+          },
+          {
+            id: '8b910f13-c608-4cf0-9fbd-886335fd9ca7',
+            value: 'BUNDLES',
+            label: 'Bundles',
+            color: 'orange',
+            position: 4,
+          },
+          {
+            id: '0676f784-4cf5-441f-9e95-33455aedd2ec',
+            value: 'CUBIC_METERS',
+            label: 'Cubic meters',
+            color: 'cyan',
+            position: 5,
+          },
+          {
+            id: '7948ba93-72aa-4a90-a401-7b747269d6f7',
+            value: 'OTHER',
+            label: 'Other — specify in notes',
+            color: 'gray',
+            position: 6,
+          },
+        ],
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.pricingQuantity,
+      name: 'pricingQuantity',
+      label: 'Pricing quantity',
+      type: FieldType.NUMBER,
+      icon: 'IconNumber',
+      isNullable: true,
+      ...{
+        description:
+          'Quantity expressed in the pricing unit; do not multiply board feet by a per-MBF price without conversion.',
+        universalSettings: {
+          dataType: 'float',
+          decimals: 4,
+        },
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.pricingUnit,
+      name: 'pricingUnit',
+      label: 'Pricing unit',
+      type: FieldType.SELECT,
+      icon: 'IconList',
+      isNullable: true,
+      ...{
+        options: [
+          {
+            id: 'c1f5283f-00ce-48a4-bb8c-985c80056b02',
+            value: 'BOARD_FEET',
+            label: 'Board feet',
+            color: 'blue',
+            position: 0,
+          },
+          {
+            id: 'e7dd9b7c-0a20-44c0-ac34-888a4372f98a',
+            value: 'THOUSAND_BOARD_FEET',
+            label: 'Thousand board feet (MBF)',
+            color: 'sky',
+            position: 1,
+          },
+          {
+            id: '6d07b2fb-11db-4916-a069-038c865181da',
+            value: 'LINEAR_FEET',
+            label: 'Linear feet',
+            color: 'green',
+            position: 2,
+          },
+          {
+            id: 'bb75685f-1e7d-4e35-ba0d-4a17b9548c17',
+            value: 'PIECES',
+            label: 'Pieces',
+            color: 'purple',
+            position: 3,
+          },
+          {
+            id: '51ff5b40-7e8c-43a5-bdbf-be2f1039c770',
+            value: 'BUNDLES',
+            label: 'Bundles',
+            color: 'orange',
+            position: 4,
+          },
+          {
+            id: '0d181321-cca2-49d2-98a1-756a27f0718e',
+            value: 'CUBIC_METERS',
+            label: 'Cubic meters',
+            color: 'cyan',
+            position: 5,
+          },
+          {
+            id: 'e0c7d62e-2f81-4341-9945-8d66c8a49887',
+            value: 'OTHER',
+            label: 'Other — specify in notes',
+            color: 'gray',
+            position: 6,
+          },
+        ],
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.unitPrice,
+      name: 'unitPrice',
+      label: 'Price per pricing unit',
+      type: FieldType.CURRENCY,
+      icon: 'IconCurrencyDollar',
+      isNullable: true,
+      ...{
+        universalSettings: {
+          format: 'full',
+          decimals: 2,
+        },
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.lineValue,
+      name: 'lineValue',
+      label: 'Agreed line value',
+      type: FieldType.CURRENCY,
+      icon: 'IconCurrencyDollar',
+      isNullable: true,
+      ...{
+        description:
+          'Store the agreed value; no automatic conversion between quantity and pricing units.',
+        universalSettings: {
+          format: 'full',
+          decimals: 2,
+        },
+      },
+    },
+    {
+      universalIdentifier: LUMBER_OBJECTS.orderLine.fields.notes,
+      name: 'notes',
+      label: 'Notes',
+      type: FieldType.TEXT,
+      icon: 'IconAbc',
+      isNullable: true,
+    },
+  ],
+});

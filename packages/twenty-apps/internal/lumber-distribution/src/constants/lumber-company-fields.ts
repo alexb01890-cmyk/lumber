@@ -1,0 +1,15 @@
+export const LUMBER_COMPANY_FIELDS = {
+  lumberRole: '3a8ee602-c23a-4596-a10f-538460fd9bde',
+  lumberRegion: 'cfeb743b-52a7-4cef-b621-2961f5bee8d7',
+  lumberCounty: 'a04ce7bc-40ea-444b-a1e4-923d9cffff8e',
+  lumberFollowUpAt: '613a3c41-3cfa-4855-977c-4f173da046e7',
+  lumberOwner: 'a1232948-6770-4ead-92fd-866acfb0eae2',
+  company_lumberProductsSupplied: 'f140c294-0b4e-4148-9db8-e889a4437480',
+  company_lumberSiteVisits: 'f596bea6-b19a-459c-baa5-f263a65a351c',
+  person_lumberSiteVisits: '908cf10f-3e02-4ed4-a450-cc3ea003f92a',
+  company_lumberCustomerOrders: 'b47b6f32-d8bd-4e35-9197-10b1a2fc3c55',
+  company_lumberSupplierOrders: 'b4acaedb-2cb1-4595-bd28-691da2c33ec0',
+  person_lumberOrders: '146d02f8-bc2c-4ad6-914a-458b1e4dc3e7',
+  company_lumberReorderPlans: 'd7d61a64-fa2d-4483-a6a6-f3f8d3264d8e',
+  company_lumberSupplierReorderPlans: '9e928db4-99c1-4885-b693-4a20873b3542',
+} as const;

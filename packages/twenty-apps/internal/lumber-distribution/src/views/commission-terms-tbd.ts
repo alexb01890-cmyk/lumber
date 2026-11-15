@@ -1,0 +1,90 @@
+import { defineView } from 'twenty-sdk/define';
+
+export default defineView({
+  universalIdentifier: 'a594ce19-e47a-4235-ab49-f1a3a86aba05',
+  name: 'Commission terms TBD',
+  objectUniversalIdentifier: 'a24350d6-b004-4c0e-bcf7-b30b5c6d3cea',
+  type: 'TABLE',
+  icon: 'IconPercentage',
+  position: 1,
+  fields: [
+    {
+      universalIdentifier: '4a212f4b-fac1-4300-a681-80b1d02e3076',
+      fieldMetadataUniversalIdentifier: '77ded3e3-e2ba-4dd9-a008-bc32ee22b993',
+      position: 0,
+      isVisible: true,
+      size: 230,
+    },
+    {
+      universalIdentifier: '4ae25af8-5f5c-49c0-9f13-68885dfa92e6',
+      fieldMetadataUniversalIdentifier: 'c01f56df-9a3c-4450-9529-932713feb024',
+      position: 1,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '7b0d9767-0481-4b22-896f-68f4db612023',
+      fieldMetadataUniversalIdentifier: '7eb57cd5-3027-4696-802f-f354371f0501',
+      position: 2,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '035bbe89-815d-4e89-9026-41175cbbe952',
+      fieldMetadataUniversalIdentifier: '69be5088-471d-453f-87ff-f4ede5e0577d',
+      position: 3,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'd7385028-7a3d-4028-a0ec-2b7cbfd1eeda',
+      fieldMetadataUniversalIdentifier: '6d1507b1-3637-49de-830a-fd9e8516e444',
+      position: 4,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'd09dab4c-3c5e-4aaa-83a7-c1bed5f6ec89',
+      fieldMetadataUniversalIdentifier: 'da793f21-470f-4dd3-9146-9af394c15774',
+      position: 5,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '4feaa674-bef3-4454-8de3-92f4a6065f37',
+      fieldMetadataUniversalIdentifier: 'ff474494-1abe-4986-a637-0c8db74b24ed',
+      position: 6,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '7669c97a-dbef-4be0-b516-b7447b0a854a',
+      fieldMetadataUniversalIdentifier: 'de0c148f-d6f6-4220-824a-f778056ca50a',
+      position: 7,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '884103f2-24cc-4f19-aa6a-ea6d9e2441b3',
+      fieldMetadataUniversalIdentifier: '77f2253e-c739-4e3c-9c9d-313e246901c4',
+      position: 8,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '67767a91-e54b-4a18-ae1d-40aaed6306ac',
+      fieldMetadataUniversalIdentifier: '7776d092-d54e-477b-bb0c-a8ea2f3e07df',
+      position: 9,
+      isVisible: true,
+      size: 170,
+    },
+  ],
+  filters: [
+    {
+      universalIdentifier: 'dfc2f235-5911-4cf6-93b2-00f68bbf0dc7',
+      fieldMetadataUniversalIdentifier: 'c01f56df-9a3c-4450-9529-932713feb024',
+      operand: 'IS',
+      value: ['TBD'],
+    },
+  ],
+});
