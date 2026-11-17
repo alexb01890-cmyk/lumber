@@ -1,0 +1,25 @@
+FROM twentycrm/twenty:v2.58.0@sha256:3f1b5140a2d0ce590462c7636c109ec30fd4008d6f31dd5e7f3149b4f8a0dbb4
+
+WORKDIR /app/packages/twenty-server
+
+COPY --chown=1000:1000 deploy/vercel/runtime /app/vercel/runtime
+COPY --chown=1000:1000 deploy/vercel/certificates /app/vercel/certificates
+COPY --chown=1000:1000 deploy/vercel/lumber-application /app/vercel/lumber-application
+
+ENV NODE_ENV=production \
+    PG_POOL_MAX_CONNECTIONS=2 \
+    PG_POOL_IDLE_TIMEOUT_MS=10000 \
+    PG_POOL_ALLOW_EXIT_ON_IDLE=true \
+    DISABLE_DB_MIGRATIONS=true \
+    DISABLE_CRON_JOBS_REGISTRATION=true \
+    LOGIC_FUNCTION_TYPE=LOCAL \
+    STORAGE_TYPE=S_3 \
+    IS_BILLING_ENABLED=false \
+    IS_MULTIWORKSPACE_ENABLED=false \
+    LUMBER_AUTO_INSTALL=true \
+    APPLICATION_LOG_DRIVER=CONSOLE
+
+USER 1000
+
+ENTRYPOINT ["node", "/app/vercel/runtime/start-worker.cjs"]
+CMD []

@@ -1,0 +1,75 @@
+import { defineView } from 'twenty-sdk/define';
+
+export default defineView({
+  universalIdentifier: '8d1e977a-ac55-4050-94f6-6bc86d85576f',
+  name: 'Shipment lots',
+  objectUniversalIdentifier: '0826c666-a73a-4052-a44a-0853dac469c8',
+  type: 'TABLE',
+  icon: 'IconTruckDelivery',
+  position: 0,
+  fields: [
+    {
+      universalIdentifier: '77e26661-e790-486c-932d-5b4a3187dd82',
+      fieldMetadataUniversalIdentifier: 'bfbd924d-636b-4f64-96cd-e3c37cd9d7e2',
+      position: 0,
+      isVisible: true,
+      size: 230,
+    },
+    {
+      universalIdentifier: 'd08ca2e1-42ef-4b07-9a3d-ce7a946b1bc3',
+      fieldMetadataUniversalIdentifier: 'b6ba0380-0e33-456a-b56e-039b9af78903',
+      position: 1,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '6fdf4f08-28c3-41e3-9b7f-46bcb4069c34',
+      fieldMetadataUniversalIdentifier: '7c14ee70-e536-46b0-bc96-005fb6b3324c',
+      position: 2,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'f4014be4-123c-4f45-8124-624a21aab839',
+      fieldMetadataUniversalIdentifier: '9cfbb84f-4649-406e-a47c-945572a461bf',
+      position: 3,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'eccac5a2-dd95-4497-8a1b-e1ed937cabed',
+      fieldMetadataUniversalIdentifier: '9fefb5cb-6c3f-4806-aa4c-5919e7eaa556',
+      position: 4,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '3f6fd068-50c3-464a-bb60-4497ec127011',
+      fieldMetadataUniversalIdentifier: '69fa0e54-cdb6-4282-b58a-9f561ea628bc',
+      position: 5,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '85b62829-3bde-4186-a9e5-6aefba4919fb',
+      fieldMetadataUniversalIdentifier: 'f7b1ff3a-3d39-4276-9e76-0cdfe7c4fb6c',
+      position: 6,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'd0200736-96cf-4d03-bd57-946f89c0b65a',
+      fieldMetadataUniversalIdentifier: '89a0d5cb-f698-4c76-9e20-0be4c685d51f',
+      position: 7,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '7e5ddb68-5ef8-4400-82f2-cd4b2f1a5fdf',
+      fieldMetadataUniversalIdentifier: '4a9005eb-9c0f-4359-bc03-62bb6386909a',
+      position: 8,
+      isVisible: true,
+      size: 170,
+    },
+  ],
+});

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": { "codex/lumber-distribution-crm": false }
+  },
+  "services": {
+    "frontend": {
+      "root": "deploy/vercel/frontend",
+      "installCommand": "true",
+      "buildCommand": "node export-front.cjs",
+      "outputDirectory": "public"
+    },
+    "crm": {
+      "root": ".",
+      "runtime": "container",
+      "entrypoint": "deploy/vercel/Dockerfile.web",
+      "functions": {
+        "deploy/vercel/Dockerfile.web": { "memory": 2048 }
+      }
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/assets/(.*)",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/images/(.*)",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/emojibase/(.*)",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/manifest.json",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/mockServiceWorker.js",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "crm" }
+    }
+  ],
+  "daemons": {
+    "worker": {
+      "root": ".",
+      "entrypoint": "deploy/vercel/Dockerfile.worker",
+      "instances": { "iad1": 1 },
+      "resources": { "requests": { "memory": "2Gi" } },
+      "terminationGracePeriodSeconds": 60,
+      "bindings": [
+        {
+          "type": "service",
+          "service": "crm",
+          "format": "url",
+          "env": "SERVER_INTERNAL_URL"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,82 @@
+import { defineView } from 'twenty-sdk/define';
+
+export default defineView({
+  universalIdentifier: '5db0f5f1-c4d0-4656-8e23-793d06b5eebf',
+  name: 'Commissions',
+  objectUniversalIdentifier: 'a24350d6-b004-4c0e-bcf7-b30b5c6d3cea',
+  type: 'TABLE',
+  icon: 'IconPercentage',
+  position: 0,
+  fields: [
+    {
+      universalIdentifier: 'd11d4a0b-33ac-4ef7-b036-0d4031af5146',
+      fieldMetadataUniversalIdentifier: '77ded3e3-e2ba-4dd9-a008-bc32ee22b993',
+      position: 0,
+      isVisible: true,
+      size: 230,
+    },
+    {
+      universalIdentifier: '56f89dde-5aeb-4523-823c-3ed7cb3a6cc8',
+      fieldMetadataUniversalIdentifier: 'c01f56df-9a3c-4450-9529-932713feb024',
+      position: 1,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '6f8c0747-d42a-4961-823d-1cd3a4dcedce',
+      fieldMetadataUniversalIdentifier: '7eb57cd5-3027-4696-802f-f354371f0501',
+      position: 2,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '3cb722f1-5e1e-48c2-a5e1-e149755bd1b7',
+      fieldMetadataUniversalIdentifier: '69be5088-471d-453f-87ff-f4ede5e0577d',
+      position: 3,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '38deb55e-2fc8-41d3-be0f-d30cd23ae19a',
+      fieldMetadataUniversalIdentifier: '6d1507b1-3637-49de-830a-fd9e8516e444',
+      position: 4,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '8ee15e17-9e4f-4bea-92da-128ab1e44cbc',
+      fieldMetadataUniversalIdentifier: 'da793f21-470f-4dd3-9146-9af394c15774',
+      position: 5,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'fc041be5-043b-48ca-85b5-744abf7cecc9',
+      fieldMetadataUniversalIdentifier: 'ff474494-1abe-4986-a637-0c8db74b24ed',
+      position: 6,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'f789ee99-e0d4-45e4-8c98-a829229fa045',
+      fieldMetadataUniversalIdentifier: 'de0c148f-d6f6-4220-824a-f778056ca50a',
+      position: 7,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '771aad83-f496-4e92-9cb9-354ff6d03a3b',
+      fieldMetadataUniversalIdentifier: '77f2253e-c739-4e3c-9c9d-313e246901c4',
+      position: 8,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '211cb738-59e3-42ab-b93f-5fe5f090bbcf',
+      fieldMetadataUniversalIdentifier: '7776d092-d54e-477b-bb0c-a8ea2f3e07df',
+      position: 9,
+      isVisible: true,
+      size: 170,
+    },
+  ],
+});

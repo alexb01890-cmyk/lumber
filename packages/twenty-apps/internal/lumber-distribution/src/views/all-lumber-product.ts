@@ -1,0 +1,82 @@
+import { defineView } from 'twenty-sdk/define';
+
+export default defineView({
+  universalIdentifier: '1ef1512a-4969-45ae-83a5-65490555dc2f',
+  name: 'Products',
+  objectUniversalIdentifier: 'dafd6634-2352-4ec8-b3b1-c4b8ed90a686',
+  type: 'TABLE',
+  icon: 'IconBox',
+  position: 0,
+  fields: [
+    {
+      universalIdentifier: '7df8b234-36b0-4760-9789-999ea2578ecb',
+      fieldMetadataUniversalIdentifier: '7d83cee6-69ff-480a-b88b-df0a760a2116',
+      position: 0,
+      isVisible: true,
+      size: 230,
+    },
+    {
+      universalIdentifier: '845be3ce-75d5-416a-9c05-178085f24a0a',
+      fieldMetadataUniversalIdentifier: 'd2da386d-02d3-47f5-a8f3-b0b3a757f91b',
+      position: 1,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'c10ef2fd-8148-48ca-afb7-f8177ab8b48b',
+      fieldMetadataUniversalIdentifier: 'c673ed1e-40e4-412f-b856-69984b65be17',
+      position: 2,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'da6e3c86-70a3-4310-aed7-9999a551de88',
+      fieldMetadataUniversalIdentifier: 'bc8dc1f8-af84-4d5e-9729-20f69a246ae2',
+      position: 3,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '4eb2f436-8e65-488b-bfad-9e1ff4e4be51',
+      fieldMetadataUniversalIdentifier: '8a171456-4e6a-4cb9-8003-f422618dc87b',
+      position: 4,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'ad52e26d-407c-4988-8cfb-e7f3ad157942',
+      fieldMetadataUniversalIdentifier: '83fe25cc-d160-451d-b9a8-ef14aa05f0a0',
+      position: 5,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '5bd24ace-fb30-4457-a729-0b9a3e071f55',
+      fieldMetadataUniversalIdentifier: '21493f41-9cf2-473a-a489-a138f4910b7b',
+      position: 6,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: '1174c29b-a8c5-408d-bd5a-ab21d5b4e324',
+      fieldMetadataUniversalIdentifier: '0cb9829a-6f8d-4328-b465-811ab9a8aab9',
+      position: 7,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'cd84d14d-dd6d-44e2-ad4b-247da368c2a8',
+      fieldMetadataUniversalIdentifier: '064bcb91-4f62-433c-89f1-c2de4ae23c4a',
+      position: 8,
+      isVisible: true,
+      size: 170,
+    },
+    {
+      universalIdentifier: 'e724d3b0-444b-46f1-a35f-bcd1d7a453fe',
+      fieldMetadataUniversalIdentifier: '02aff32c-86bd-4ced-8461-00717f1ac648',
+      position: 9,
+      isVisible: true,
+      size: 170,
+    },
+  ],
+});
