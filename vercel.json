@@ -4,7 +4,10 @@
     "crm": {
       "root": ".",
       "runtime": "container",
-      "entrypoint": "deploy/vercel/Dockerfile.web"
+      "entrypoint": "deploy/vercel/Dockerfile.web",
+      "functions": {
+        "**": { "maxConcurrency": 256, "memory": 2048 }
+      }
     }
   },
   "rewrites": [

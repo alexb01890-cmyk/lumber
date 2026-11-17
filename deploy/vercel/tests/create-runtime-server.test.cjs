@@ -27,6 +27,7 @@ const runtime = async (context, options = {}) => {
     port: 0,
     backendPort: 1,
     host: '127.0.0.1',
+    startupWaitMs: 0,
     ...options,
   });
   context.after(() => server.close());
@@ -56,6 +57,182 @@ const request = (port, options = {}, body) =>
     );
     outgoing.end(body);
   });
+
+const turn = () => new Promise((resolve) => setTimeout(resolve, 10));
+
+test(
+  'cold requests wait for readiness and receive the native response',
+  { timeout: 2000 },
+  async (context) => {
+    const backendPort = await listen(
+      http.createServer((_incoming, response) => response.end('CRM ready')),
+      context,
+    );
+    const server = await runtime(context, { backendPort, startupWaitMs: 1000 });
+    let completed = false;
+    const pending = request(server.address().port).then((result) => {
+      completed = true;
+      return result;
+    });
+    await turn();
+    assert.equal(completed, false);
+    server.markReady();
+    const result = await pending;
+    assert.equal(result.status, 200);
+    assert.equal(result.body.toString(), 'CRM ready');
+  },
+);
+
+test(
+  'a held upload streams to the backend after readiness',
+  { timeout: 2000 },
+  async (context) => {
+    let receivedChunk;
+    const firstChunk = new Promise((resolve) => (receivedChunk = resolve));
+    let body = '';
+    const backendPort = await listen(
+      http.createServer((incoming, response) => {
+        incoming.on('data', (chunk) => {
+          body += chunk;
+          receivedChunk();
+        });
+        incoming.on('end', () => response.end(body));
+      }),
+      context,
+    );
+    const server = await runtime(context, { backendPort, startupWaitMs: 1000 });
+    const outgoing = http.request({
+      hostname: '127.0.0.1',
+      port: server.address().port,
+      method: 'POST',
+      agent: false,
+    });
+    context.after(() => outgoing.destroy());
+    outgoing.on('error', () => {});
+    const responding = once(outgoing, 'response');
+    outgoing.write('first-');
+    await turn();
+    assert.equal(body, '');
+    server.markReady();
+    await firstChunk;
+    outgoing.end('last');
+    const [response] = await responding;
+    const chunks = [];
+    response.on('data', (chunk) => chunks.push(chunk));
+    await once(response, 'end');
+    assert.equal(response.statusCode, 200);
+    assert.equal(Buffer.concat(chunks).toString(), 'first-last');
+  },
+);
+
+test(
+  'a cold request receives retryable 503 after its bounded wait',
+  { timeout: 2000 },
+  async (context) => {
+    const server = await runtime(context, { startupWaitMs: 10 });
+    const result = await request(server.address().port, { path: '/healthz' });
+    assert.equal(result.status, 503);
+    assert.equal(result.headers['retry-after'], '3');
+    assert.equal(JSON.parse(result.body.toString()).status, 'starting');
+  },
+);
+
+test(
+  'the bounded queue rejects overflow while preserving its waiting request',
+  { timeout: 2000 },
+  async (context) => {
+    const backendPort = await listen(
+      http.createServer((_incoming, response) => response.end('ready')),
+      context,
+    );
+    const server = await runtime(context, {
+      backendPort,
+      startupWaitMs: 1000,
+      maxPendingRequests: 1,
+    });
+    let completed = false;
+    const pending = request(server.address().port).then((result) => {
+      completed = true;
+      return result;
+    });
+    await turn();
+    const overflow = await request(server.address().port);
+    assert.equal(overflow.status, 503);
+    assert.equal(completed, false);
+    server.markReady();
+    assert.equal((await pending).status, 200);
+  },
+);
+
+test(
+  'disconnecting a held client releases its queue slot',
+  { timeout: 2000 },
+  async (context) => {
+    const backendPort = await listen(
+      http.createServer((_incoming, response) => response.end('ready')),
+      context,
+    );
+    const server = await runtime(context, {
+      backendPort,
+      startupWaitMs: 1000,
+      maxPendingRequests: 1,
+    });
+    const outgoing = http.get({
+      hostname: '127.0.0.1',
+      port: server.address().port,
+      agent: false,
+    });
+    outgoing.on('error', () => {});
+    await turn();
+    const closed = new Promise((resolve) => outgoing.once('close', resolve));
+    outgoing.destroy();
+    await closed;
+    await turn();
+    let completed = false;
+    const pending = request(server.address().port).then((result) => {
+      completed = true;
+      return result;
+    });
+    await turn();
+    assert.equal(completed, false);
+    server.markReady();
+    assert.equal((await pending).status, 200);
+  },
+);
+
+test(
+  'close clears held requests and their readiness timers',
+  { timeout: 2000 },
+  async (context) => {
+    const server = await runtime(context, { startupWaitMs: 60_000 });
+    const pending = request(server.address().port);
+    const rejected = assert.rejects(pending, { code: 'ECONNRESET' });
+    await turn();
+    await server.close();
+    await rejected;
+    server.markReady();
+    assert.equal(server.address(), null);
+  },
+);
+
+test(
+  'abort clears held requests without waiting for their deadline',
+  { timeout: 2000 },
+  async (context) => {
+    const controller = new AbortController();
+    const server = await runtime(context, {
+      startupWaitMs: 60_000,
+      signal: controller.signal,
+    });
+    const rejected = assert.rejects(request(server.address().port), {
+      code: 'ECONNRESET',
+    });
+    await turn();
+    controller.abort();
+    await server.close();
+    await rejected;
+  },
+);
 
 test('startup serves honest retryable HTML before the backend is ready', async (context) => {
   const server = await runtime(context);

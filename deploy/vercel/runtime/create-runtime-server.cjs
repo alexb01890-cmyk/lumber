@@ -36,6 +36,8 @@ const createRuntimeServer = async ({
   backendPort,
   host = '0.0.0.0',
   backendHost = '127.0.0.1',
+  startupWaitMs = 25_000,
+  maxPendingRequests = 64,
   signal,
 }) => {
   signal?.throwIfAborted();
@@ -43,8 +45,8 @@ const createRuntimeServer = async ({
   let closing;
   const connections = new Set();
   const requests = new Set();
-  const server = http.createServer((request, response) => {
-    if (!ready) return startupResponse(request, response);
+  const waiting = new Set();
+  const proxy = (request, response) => {
     const upstream = http.request({
       hostname: backendHost,
       port: backendPort,
@@ -74,6 +76,33 @@ const createRuntimeServer = async ({
     request.once('error', () => upstream.destroy());
     response.once('close', () => upstream.destroy());
     request.pipe(upstream);
+  };
+  const server = http.createServer((request, response) => {
+    if (ready) return proxy(request, response);
+    if (startupWaitMs <= 0 || waiting.size >= maxPendingRequests) {
+      return startupResponse(request, response);
+    }
+    request.pause();
+    const finish = (outcome) => {
+      clearTimeout(timer);
+      waiting.delete(finish);
+      request.removeListener('aborted', disconnected);
+      request.removeListener('error', disconnected);
+      response.removeListener('close', disconnected);
+      if (response.destroyed) return;
+      if (outcome === 'ready') proxy(request, response);
+      if (outcome === 'timeout') {
+        request.resume();
+        startupResponse(request, response);
+      }
+    };
+    const disconnected = () => finish();
+    const timer = setTimeout(() => finish('timeout'), startupWaitMs);
+    timer.unref();
+    waiting.add(finish);
+    request.once('aborted', disconnected);
+    request.once('error', disconnected);
+    response.once('close', disconnected);
   });
   server.on('connection', (socket) => {
     connections.add(socket);
@@ -122,6 +151,7 @@ const createRuntimeServer = async ({
     signal?.removeEventListener('abort', abort);
     closing = new Promise((resolve) => {
       server.close(() => resolve());
+      for (const finish of waiting) finish();
       for (const request of requests) request.destroy();
       for (const connection of connections) connection.destroy();
     });
@@ -167,7 +197,9 @@ const createRuntimeServer = async ({
   }
   return {
     markReady: () => {
-      if (!closing) ready = true;
+      if (closing) return;
+      ready = true;
+      for (const finish of waiting) finish('ready');
     },
     close,
     address: () => server.address(),

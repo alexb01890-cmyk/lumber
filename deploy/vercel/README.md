@@ -30,6 +30,9 @@ An always-running worker consumes Vercel's provisioned-memory allowance even whi
 | `SERVER_URL` | Stable production HTTPS URL, such as the project's assigned `.vercel.app` domain. |
 | `PORT` | `3000`; Vercel's container router needs this explicitly. |
 | `PG_DATABASE_URL` | Direct PostgreSQL connection string. |
+| `PG_POOL_MAX_CONNECTIONS` | `2` per native pool for the free shared database. |
+| `PG_POOL_IDLE_TIMEOUT_MS` | `10000` to release idle database connections promptly. |
+| `PG_POOL_ALLOW_EXIT_ON_IDLE` | `true`. |
 | `REDIS_URL` | Native `rediss://` connection string for managed Redis (or `redis://` on a trusted private network). |
 | `ENCRYPTION_KEY` | One generated secret shared by API and worker; preserve it across deployments. |
 | `STORAGE_S3_NAME` | Private bucket name. |
@@ -52,7 +55,7 @@ Both images contain the same runtime scripts. A SHA-256 digest of those scripts 
 
 The worker acquires a PostgreSQL advisory lock, initializes an empty database or upgrades an existing one, flushes the metadata cache, and registers scheduled jobs. It marks that release ready only after every command succeeds, then starts the queue worker. Failed bootstrap stops the worker with an error.
 
-HTTP containers immediately open the platform port and return a private, uncached 503 startup page while waiting for the matching readiness marker. They start Twenty on a private port and route traffic only after its HTTP health check succeeds. Streaming requests, response cookies, and upgrade connections pass through to Twenty. HTTP containers never run migrations or register scheduled jobs on a cold start.
+HTTP containers immediately open the platform port and hold initial requests for up to 25 seconds while waiting for the matching readiness marker and native HTTP health check. Requests exceeding that bound receive a private, uncached 503 startup page. The service accepts concurrent requests in the same instance, and native database pools default to two connections to limit pressure on a free shared database. Streaming requests, response cookies, and upgrade connections pass through to Twenty. HTTP containers never run migrations or register scheduled jobs on a cold start.
 
 Deploy an active **Production** release behind the onboarding protection below and inspect both service and daemon logs. A staged `--prod --skip-domain` deployment may not start its daemon until it becomes the active production release; HTTP containers will then keep waiting for bootstrap. Production here selects Vercel's environment; creating the first CRM account and installing the lumber app remain separate steps.
 
