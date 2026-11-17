@@ -46,13 +46,13 @@ An always-running worker consumes Vercel's provisioned-memory allowance even whi
 
 The images set remote S3 storage, enable the trusted lumber calculation functions, and disable Twenty cloud billing and multi-workspace signup. The worker receives `SERVER_INTERNAL_URL` through a Vercel service binding; do not replace that binding with a hardcoded preview URL. The HTTP service uses its own loopback URL for internal requests.
 
-Vercel must expose its deployment identity to the runtime (`VERCEL_DEPLOYMENT_ID` or `VERCEL_GIT_COMMIT_SHA`) so a web container can match the worker's completed bootstrap to the same release. Ensure automatic system environment variables are enabled in the project.
+Both images contain the same runtime scripts. A SHA-256 digest of those scripts and the pinned image identifies their bootstrap readiness, scoped to the Twenty version and public origin. This remains consistent when Vercel gives its service and daemon different deployment metadata; changing the runtime scripts creates a new readiness identity.
 
 ## Database bootstrap and startup
 
 The worker acquires a PostgreSQL advisory lock, initializes an empty database or upgrades an existing one, flushes the metadata cache, and registers scheduled jobs. It marks that release ready only after every command succeeds, then starts the queue worker. Failed bootstrap stops the worker with an error.
 
-HTTP containers wait for the matching readiness marker and then start the API. They never run migrations or register scheduled jobs on a cold start. This avoids concurrent schema changes when Vercel starts multiple HTTP instances.
+HTTP containers immediately open the platform port and return a private, uncached 503 startup page while waiting for the matching readiness marker. They start Twenty on a private port and route traffic only after its HTTP health check succeeds. Streaming requests, response cookies, and upgrade connections pass through to Twenty. HTTP containers never run migrations or register scheduled jobs on a cold start.
 
 Deploy an active **Production** release behind the onboarding protection below and inspect both service and daemon logs. A staged `--prod --skip-domain` deployment may not start its daemon until it becomes the active production release; HTTP containers will then keep waiting for bootstrap. Production here selects Vercel's environment; creating the first CRM account and installing the lumber app remain separate steps.
 
@@ -66,7 +66,21 @@ This outer gate matters even with signup restrictions enabled: Twenty allows ini
 
 ## Install the lumber app and close general invitations
 
-After owner onboarding, run these commands on Windows with Node.js 24 and Git installed. While Vercel Authentication remains enabled, CLI requests also need approved platform access: configure its [automation bypass](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation) privately through the Twenty CLI's `--proxy-header-command` support. A Twenty access token alone does not bypass Vercel's gate. Never commit the bypass secret or send it in chat.
+The worker image includes a verified Lumber Distribution build and enables `LUMBER_AUTO_INSTALL=true`. Its installer waits for the owner's workspace to finish provisioning while the normal queue worker continues running. It then uses Twenty's pinned administrative services to register the app, upload its artifacts to private storage, and apply its manifest. It rejects foreign registrations and destructive changes, verifies the resulting schema, and records the successful content hash in `vercel_runtime.lumber_installation`. The owner does not need Windows command-line tools or to share a password or API token.
+
+After installation succeeds, refresh the CRM and open **Lumber Overview**. An installer failure reports only its phase in the daemon logs and leaves the normal queue worker running. Correct the failure and redeploy before claiming the lumber features are ready. This adapter is tied to the pinned Twenty version and must be verified when upgrading the base image.
+
+After editing the SDK app, regenerate and commit its retained deployment package using the matching CLI:
+
+```bash
+node deploy/vercel/scripts/package-lumber-application.cjs --twenty-package /path/to/node_modules/twenty
+```
+
+The helper uses the official Twenty 2.58.0 build worker, verifies every artifact and its content hash while holding the snapshot, then releases it. Do not edit retained files manually.
+
+### Optional developer workflow
+
+For manual SDK development, disable automatic installation and use these Windows commands with Node.js 24 and Git installed. While Vercel Authentication remains enabled, CLI requests also need approved platform access: configure its [automation bypass](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation) privately through the Twenty CLI's `--proxy-header-command` support. A Twenty access token alone does not bypass Vercel's gate. Never commit the bypass secret or send it in chat.
 
 ```powershell
 npm.cmd install -g twenty@2.58.0 @yarnpkg/cli-dist@4.18.1
@@ -79,7 +93,7 @@ twenty.cmd auth login --url https://YOUR-PRODUCTION-DOMAIN --name lumber
 twenty.cmd app apply --create --remote lumber
 ```
 
-Replace the URL with your actual production URL. This opens browser authentication; it does not require sending a password or token to anyone. After apply succeeds, refresh the CRM and open **Lumber Overview**. Merely starting Twenty does not install the lumber SDK app.
+Replace the URL with your actual production URL. This opens browser authentication; it does not require sending a password or token to anyone.
 
 The clone command selects the pull request branch while these changes are unmerged. After merge, use `main`. For an existing checkout, switch to the intended branch instead of cloning over local work.
 

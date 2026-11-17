@@ -4,6 +4,7 @@ WORKDIR /app/packages/twenty-server
 
 COPY --chown=1000:1000 deploy/vercel/runtime /app/vercel/runtime
 COPY --chown=1000:1000 deploy/vercel/certificates /app/vercel/certificates
+COPY --chown=1000:1000 deploy/vercel/lumber-application /app/vercel/lumber-application
 
 ENV NODE_ENV=production \
     DISABLE_DB_MIGRATIONS=true \
@@ -12,6 +13,7 @@ ENV NODE_ENV=production \
     STORAGE_TYPE=S_3 \
     IS_BILLING_ENABLED=false \
     IS_MULTIWORKSPACE_ENABLED=false \
+    LUMBER_AUTO_INSTALL=true \
     APPLICATION_LOG_DRIVER=CONSOLE
 
 USER 1000

@@ -52,3 +52,31 @@ test('missing configuration fails before touching the database', async () => {
     { code: 'VERCEL_CONFIGURATION' },
   );
 });
+
+test('owner installation starts after queue consumption and is canceled when the worker stops', async () => {
+  const calls = [];
+  let stopWorker;
+  await startWorker(validEnvironment(), {
+    createClient: () => ({}),
+    bootstrap: async () => calls.push('database ready'),
+    run: () => {
+      calls.push('queue started');
+      return new Promise((resolve) => {
+        stopWorker = resolve;
+      });
+    },
+    install: async (_environment, { signal }) => {
+      calls.push('installer started');
+      signal.addEventListener('abort', () => calls.push('installer stopped'), {
+        once: true,
+      });
+      stopWorker();
+    },
+  });
+  assert.deepEqual(calls, [
+    'database ready',
+    'queue started',
+    'installer started',
+    'installer stopped',
+  ]);
+});

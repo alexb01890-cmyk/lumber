@@ -3,9 +3,10 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { validateEnvironment } = require('../runtime/validate-environment.cjs');
+const { getRuntimeRelease } = require('../runtime/runtime-release.cjs');
 const { validEnvironment } = require('./fixtures/valid-environment.cjs');
 
-test('valid web environment uses the platform port, loopback calls and temporary scratch', () => {
+test('valid web environment separates the platform listener from the private API and temporary scratch', () => {
   const input = {
     ...validEnvironment(),
     PORT: '4300',
@@ -13,8 +14,9 @@ test('valid web environment uses the platform port, loopback calls and temporary
     STORAGE_LOCAL_PATH: '/app/persistent',
   };
   const result = validateEnvironment(input, 'web');
-  assert.equal(result.environment.NODE_PORT, '4300');
-  assert.equal(result.environment.SERVER_INTERNAL_URL, 'http://127.0.0.1:4300');
+  assert.equal(result.environment.NODE_PORT, '3001');
+  assert.equal(result.environment.PORT, '4300');
+  assert.equal(result.environment.SERVER_INTERNAL_URL, 'http://127.0.0.1:3001');
   assert.equal(result.environment.TMPDIR, '/tmp');
   assert.equal(result.environment.LOGIC_FUNCTION_TYPE, 'LOCAL');
   assert.equal(result.environment.DISABLE_DB_MIGRATIONS, 'true');
@@ -118,7 +120,7 @@ test('production localhost HTTP does not pass as a local test', () => {
   );
 });
 
-test('readiness scope contains release, origin and deployment identity', () => {
+test('readiness scope contains the runtime release and public origin', () => {
   const input = {
     ...validEnvironment(),
     SERVER_URL: 'https://lumber.example.com/',
@@ -126,25 +128,30 @@ test('readiness scope contains release, origin and deployment identity', () => {
   assert.deepEqual(validateEnvironment(input, 'web').scope, {
     serverUrl: 'https://lumber.example.com',
     runtimeVersion: '2.58.0',
-    deploymentId: 'dpl_test',
+    deploymentId: getRuntimeRelease(),
   });
 });
 
-test('Git SHA is a supported deployment-identity fallback', () => {
-  const input = { ...validEnvironment(), VERCEL_GIT_COMMIT_SHA: 'test-commit' };
-  delete input.VERCEL_DEPLOYMENT_ID;
+test('service and daemon revision metadata cannot disagree about readiness', () => {
+  const web = { ...validEnvironment(), VERCEL_DEPLOYMENT_ID: 'dpl_web' };
+  const worker = {
+    ...validEnvironment(),
+    VERCEL_GIT_COMMIT_SHA: 'worker-commit',
+  };
+  delete worker.VERCEL_DEPLOYMENT_ID;
   assert.equal(
-    validateEnvironment(input, 'web').scope.deploymentId,
-    'test-commit',
+    validateEnvironment(web, 'web').scope.deploymentId,
+    validateEnvironment(worker, 'worker').scope.deploymentId,
   );
 });
 
-test('missing identity cannot borrow readiness from another release', () => {
+test('runtime source identifies a release without platform revision metadata', () => {
   const input = validEnvironment();
   delete input.VERCEL_DEPLOYMENT_ID;
-  assert.throws(
-    () => validateEnvironment(input, 'web'),
-    /VERCEL_DEPLOYMENT_ID/,
+  delete input.VERCEL_GIT_COMMIT_SHA;
+  assert.match(
+    validateEnvironment(input, 'web').scope.deploymentId,
+    /^[a-f0-9]{64}$/,
   );
 });
 

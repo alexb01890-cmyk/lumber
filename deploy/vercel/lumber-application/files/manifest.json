@@ -1,0 +1,4683 @@
+{
+  "application": {
+    "universalIdentifier": "c7eab9b8-4256-4712-8b56-74a7f04b00b9",
+    "displayName": "Lumber Distribution",
+    "description": "Supplier-direct lumber sales, Florida field visits, deliveries, recurring business, and commissions",
+    "galleryImages": [],
+    "defaultRoleUniversalIdentifier": "fd4b90e6-af9e-4b3b-930d-b21c5720eb9c",
+    "aboutDescription": "# Lumber Distribution\n\nA Twenty CRM app for arranging lumber shipments directly from suppliers to customers, with Florida field sales and product demonstrations. The name is a working label; business branding, products, regions and terms can change later. Monetary fields use USD in this first version.\n\nThis app extends Twenty rather than replacing its core. A running Twenty instance **2.58.0 or later** is required. The GitHub repository by itself is not a hosted CRM.\n\n## What the first version includes\n\n| Area | How to use it |\n| --- | --- |\n| Companies and people | Keep existing contacts; add customer/supplier role, region, county and follow-up information. |\n| Products | Link a supplier; record optional species, grade, dimensions, treatment, units, reference prices, samples and lead times. |\n| Site visits | Schedule a customer visit, link a contact and sample product, record samples shown, photos, feedback and the next action. |\n| Orders and order lines | Record quotes and confirmed orders separately; agree quantities, measurement units, pricing units, prices, supplier and delivery address. |\n| Shipment lots | Link each delivery portion to one order line, with quantity, unit, reference, expected/actual dates and delay notes. |\n| Reorder plans | Store the repeat interval in months, next need date, review date and active/paused state. Review dates surface work before the next delivery is needed. |\n| Commissions | Keep the commission basis and rate unset until agreed; track expected and received commission and each side's payouts separately. |\n| Lumber Overview | See confirmed order value, planned visits, undelivered shipment lots, commission amounts and sales/delivery status charts. |\n\nNo warehouse stock or inventory ownership is assumed. Companies and People remain Twenty's existing records.\n\n## A first customer\n\n1. Add the prospect under **Companies**, then its contact under **People**. Record a region/county and the next follow-up.\n2. Add the supplier and a product. Specifications may remain blank while the catalog is being developed.\n3. Schedule a **Site visit**. Record which samples were shown or left, the customer's feedback and the next action.\n4. Create an **Order** as a quote; add its **Order lines**. Keep quantity and pricing units explicit: 1,000 board feet and 1 thousand board feet represent the same volume but different pricing quantities.\n5. Confirm the order when the customer agrees. Customer payment status is independent of sales and shipment status.\n6. Add a **Shipment lot** for each order line/delivery portion. For 1,000 board feet delivered in two portions, use lots of 400 and 600. Use the same shipment reference for multiple lots travelling together. Lot counts on the dashboard are not truck counts.\n7. Add a **Commission** linked to the order. Agree the eligible amount/basis and rate before marking terms confirmed. The calculation must not assume freight or tax is commissionable.\n8. Record commission money received and payouts when they actually happen. Delivery alone does not imply payment.\n9. For repeat business, create a **Reorder plan** and its review date. A plan represents anticipated business; a new confirmed order still requires customer agreement.\n\n## Commission terms\n\nOrder value, commission income and your allocation are different amounts. For an illustrative $20,000 eligible amount at 5%, expected commission is $1,000. A confirmed 50/50 split would allocate $500 to your side and $500 to the partner pool. Partner-pool allocation is not $500 per individual partner.\n\nThe split remains a proposal until **Split confirmed** is checked. Confirm the intended partner arrangement before doing that. An unknown rate is **TBD**, not 0%. Rates and terms are stored on individual commission records so later deals can use different agreements.\n\nCommission-created and commission-updated handlers recalculate expected commission and allocations from the current agreed terms. Received amounts and payouts remain actual amounts entered separately. Calculation helpers use integer money and currency-cent rounding; the current calculator supports USD. Reconcile payout history with accounting records.\n\n## Recurring business\n\nReorder plans store calendar-month intervals and review dates. The planning tool calculates a review date from supplier lead time plus a review buffer and clamps month-end dates (for example January 31 to February 28/29). It previews dates; it does not create orders, send messages, or schedule supplier shipments. Use the review views alongside Twenty tasks for follow-up.\n\n## Install and validate\n\nSee [SETUP.md](./SETUP.md) for installation into an existing workspace, local development and isolated tests. Nothing is installed into a live workspace until `twenty app apply --create` succeeds.\n\nThe app has no external commerce integrations, automatic supplier booking, customer invoicing or public customer portal. Shipment totals and order/line values should be reconciled when entering a transaction; this version does not automatically convert quantity units or enforce aggregate lot quantities across all deliveries.\n",
+    "yarnLockChecksum": "f928c4c05aaaa8dbd5ecd305090dbfa7",
+    "packageJsonChecksum": "b7b066a19fcf24bc01bba90e2bd2923f",
+    "requiredServerVersionRange": ">=2.58.0",
+    "healthCheckLogicFunction": {
+      "universalIdentifier": "b9f54630-625d-4834-a01d-f613169946a0"
+    }
+  },
+  "objects": [
+    {
+      "universalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "nameSingular": "lumberShipment",
+      "namePlural": "lumberShipments",
+      "labelSingular": "Shipment lot",
+      "labelPlural": "Shipment lots",
+      "icon": "IconTruckDelivery",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+      "fields": [
+        {
+          "universalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "cd5c8717-767d-4c3c-a784-cdc132859002",
+              "value": "PLANNED",
+              "label": "Planned",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "e43314cc-915c-462e-b07c-2a2b6c504b45",
+              "value": "IN_TRANSIT",
+              "label": "In transit",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "efd599e9-8409-40f7-8b06-7ba2cb975c47",
+              "value": "DELAYED",
+              "label": "Delayed",
+              "color": "red",
+              "position": 2
+            },
+            {
+              "id": "dcc7ae97-197a-43f7-986a-1f65cd85ef2d",
+              "value": "DELIVERED",
+              "label": "Delivered",
+              "color": "green",
+              "position": 3
+            },
+            {
+              "id": "dcef7dca-3aa7-4614-b72e-61c9aff5624d",
+              "value": "CANCELLED",
+              "label": "Cancelled",
+              "color": "gray",
+              "position": 4
+            }
+          ],
+          "defaultValue": "'PLANNED'"
+        },
+        {
+          "universalIdentifier": "7c14ee70-e536-46b0-bc96-005fb6b3324c",
+          "name": "shipmentReference",
+          "label": "Shipment reference",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true,
+          "description": "Use the same reference on lots belonging to one multi-line consignment."
+        },
+        {
+          "universalIdentifier": "9fefb5cb-6c3f-4806-aa4c-5919e7eaa556",
+          "name": "quantity",
+          "label": "Lot quantity",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "description": "This lot is a quantity allocated to a single order line.",
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "69fa0e54-cdb6-4282-b58a-9f561ea628bc",
+          "name": "quantityUnit",
+          "label": "Quantity unit",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "0d7492ed-3475-4032-9f3f-d2420e9ceb79",
+              "value": "BOARD_FEET",
+              "label": "Board feet",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "3bf6a38b-63d2-4099-ae0b-243f8b4ceff6",
+              "value": "THOUSAND_BOARD_FEET",
+              "label": "Thousand board feet (MBF)",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "d1a6787b-372b-4944-af1f-ad3209ad78f2",
+              "value": "LINEAR_FEET",
+              "label": "Linear feet",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "94cc123d-a500-4b5c-af01-69b7f7b2a7c2",
+              "value": "PIECES",
+              "label": "Pieces",
+              "color": "purple",
+              "position": 3
+            },
+            {
+              "id": "b80d1c0b-3d8c-4dd4-86d5-ab8621953655",
+              "value": "BUNDLES",
+              "label": "Bundles",
+              "color": "orange",
+              "position": 4
+            },
+            {
+              "id": "901b51b4-db1f-4a73-bc59-f924653b7c0b",
+              "value": "CUBIC_METERS",
+              "label": "Cubic meters",
+              "color": "cyan",
+              "position": 5
+            },
+            {
+              "id": "b0b68939-50df-4bf9-be90-f532433e7a92",
+              "value": "OTHER",
+              "label": "Other — specify in notes",
+              "color": "gray",
+              "position": 6
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "c5bee1e3-71c3-4a15-aaa3-e28da73b80d4",
+          "name": "expectedDepartureAt",
+          "label": "Expected departure at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "f7b1ff3a-3d39-4276-9e76-0cdfe7c4fb6c",
+          "name": "expectedDeliveryAt",
+          "label": "Expected delivery at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "c403eed4-d2d3-4939-a53b-1104fbac3ea8",
+          "name": "shippedAt",
+          "label": "Actually shipped at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "89a0d5cb-f698-4c76-9e20-0be4c685d51f",
+          "name": "deliveredAt",
+          "label": "Actually delivered at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "594a7ae2-8738-4b23-ae3c-d467eff4b3a5",
+          "name": "carrier",
+          "label": "Carrier",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "eb8ffd8f-7d6d-4c40-a8ea-d90dc3d7ad0e",
+          "name": "trackingReference",
+          "label": "Tracking / delivery reference",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "4a9005eb-9c0f-4359-bc03-62bb6386909a",
+          "name": "delayNotes",
+          "label": "Delay notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "2e0a5530-3aef-4911-a9e4-7ceaa41e71a9",
+          "name": "deliveryNotes",
+          "label": "Delivery notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "nameSingular": "lumberOrder",
+      "namePlural": "lumberOrders",
+      "labelSingular": "Order",
+      "labelPlural": "Orders",
+      "icon": "IconShoppingCart",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "66ab3c90-7dbc-40c9-b639-de336dc5d7ff",
+      "fields": [
+        {
+          "universalIdentifier": "66ab3c90-7dbc-40c9-b639-de336dc5d7ff",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "3ea3eac8-f0c2-42d0-87c4-8cbebf596ed0",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "c6874459-a5c2-4c59-b876-b7550aaf855e",
+              "value": "DRAFT",
+              "label": "Draft",
+              "color": "gray",
+              "position": 0
+            },
+            {
+              "id": "1d9388cc-6b5a-42e7-ad80-d81a25c385ad",
+              "value": "QUOTED",
+              "label": "Quoted",
+              "color": "blue",
+              "position": 1
+            },
+            {
+              "id": "257a131b-2503-4f00-bdcf-7c55ac7f1626",
+              "value": "CONFIRMED",
+              "label": "Confirmed",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "23912944-54a3-4e76-b445-85ff7c32cae6",
+              "value": "CANCELLED",
+              "label": "Cancelled",
+              "color": "red",
+              "position": 3
+            }
+          ],
+          "defaultValue": "'DRAFT'"
+        },
+        {
+          "universalIdentifier": "af8295df-ecb1-40c5-a243-018f767f8d91",
+          "name": "orderValue",
+          "label": "Order value",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "description": "Total customer order value; separate from commission income.",
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "d0953393-2a0c-4a43-a083-4b0b72ccc49c",
+          "name": "paymentStatus",
+          "label": "Customer payment status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "5b060509-e7aa-47e2-8725-c8cc18946ac3",
+              "value": "UNKNOWN",
+              "label": "Not yet agreed",
+              "color": "gray",
+              "position": 0
+            },
+            {
+              "id": "a15ffe17-f1c5-48de-867d-4f77ae9d4d3b",
+              "value": "UNPAID",
+              "label": "Unpaid",
+              "color": "orange",
+              "position": 1
+            },
+            {
+              "id": "ceaefcac-88da-4607-9c9e-d13c360076dc",
+              "value": "PART_PAID",
+              "label": "Part paid",
+              "color": "yellow",
+              "position": 2
+            },
+            {
+              "id": "ed62049f-99ea-4aed-bdef-dba4f81d94ee",
+              "value": "PAID",
+              "label": "Paid",
+              "color": "green",
+              "position": 3
+            },
+            {
+              "id": "026a819d-e454-4aa6-90fc-9f3a92249eb8",
+              "value": "REFUNDED",
+              "label": "Refunded",
+              "color": "red",
+              "position": 4
+            }
+          ],
+          "defaultValue": "'UNKNOWN'"
+        },
+        {
+          "universalIdentifier": "82745d28-0635-4bcc-8184-aab7949a7154",
+          "name": "quotedAt",
+          "label": "Quoted at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "f6354f2f-7df9-4d8e-a71b-981d1b7b3018",
+          "name": "confirmedAt",
+          "label": "Confirmed at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "963cd62a-4c66-4aac-9089-4e09bcff7fbc",
+          "name": "requestedDeliveryAt",
+          "label": "Requested delivery at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "f98c7133-3be8-4c74-9a40-df261c0e9226",
+          "name": "deliveryAddress",
+          "label": "Delivery address",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "f629a52f-5671-488c-9eaf-30dc416c718d",
+          "name": "customerReference",
+          "label": "Customer reference / PO",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "423897b5-fcf3-47cc-b61c-b01bedfd8db7",
+          "name": "owner",
+          "label": "Salesperson / partner",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "3967c071-e6b9-4d3f-a01f-ee311cf14b94",
+          "name": "notes",
+          "label": "Order and delivery notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "nameSingular": "siteVisit",
+      "namePlural": "siteVisits",
+      "labelSingular": "Site visit",
+      "labelPlural": "Site visits",
+      "icon": "IconMapPin",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "8ea32c22-889b-41fc-8e8b-f869df747eee",
+      "fields": [
+        {
+          "universalIdentifier": "8ea32c22-889b-41fc-8e8b-f869df747eee",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "171a7a7d-fe64-4603-afbf-d1ec4eede52d",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "8bc0fe4a-b768-4309-92fb-cfc8976d7ccb",
+              "value": "PLANNED",
+              "label": "Planned",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "8ca1d5de-b851-4f11-8eea-6de6fc482349",
+              "value": "COMPLETED",
+              "label": "Completed",
+              "color": "green",
+              "position": 1
+            },
+            {
+              "id": "a41b37e1-a0c0-43ba-91b5-b246a3319674",
+              "value": "CANCELLED",
+              "label": "Cancelled",
+              "color": "gray",
+              "position": 2
+            }
+          ],
+          "defaultValue": "'PLANNED'"
+        },
+        {
+          "universalIdentifier": "c6d9582d-ff05-4ab9-a6e8-38424ab59464",
+          "name": "scheduledAt",
+          "label": "Scheduled at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "4508220f-01d3-4a2a-a37d-d98861d78815",
+          "name": "location",
+          "label": "Visit location",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "c9f78e61-11b2-4549-ba7b-a300c368cb69",
+          "name": "samplesShown",
+          "label": "Samples shown / left",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true,
+          "description": "List product names, sample references, and whether samples were left with the customer."
+        },
+        {
+          "universalIdentifier": "0312caf8-eae6-458b-848e-cd5d340b3921",
+          "name": "photos",
+          "label": "Visit / sample photos",
+          "type": "FILES",
+          "icon": "IconPhoto",
+          "isNullable": true,
+          "universalSettings": {
+            "maxNumberOfValues": 10
+          }
+        },
+        {
+          "universalIdentifier": "0dcfdecf-4679-4388-9f7a-ae15f76d0b73",
+          "name": "feedback",
+          "label": "Customer feedback",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "1f4a9cce-a2bb-4b95-bd66-8bfb6cd3daad",
+          "name": "nextAction",
+          "label": "Next action",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "77e902b7-c0bd-43a2-b3be-de9c4c640e4c",
+          "name": "followUpAt",
+          "label": "Follow up at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "5dea08b1-edb7-4120-ae80-745a890f32a0",
+          "name": "notes",
+          "label": "Notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "nameSingular": "reorderPlan",
+      "namePlural": "reorderPlans",
+      "labelSingular": "Reorder plan",
+      "labelPlural": "Reorder plans",
+      "icon": "IconRepeat",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "1ced4ee3-24d6-4229-b744-d75a701a3e58",
+      "fields": [
+        {
+          "universalIdentifier": "1ced4ee3-24d6-4229-b744-d75a701a3e58",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "48fa6526-bd17-41d7-8792-d7005afa224a",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "47183923-f27e-4246-89cc-52e07ed7bbcc",
+              "value": "ACTIVE",
+              "label": "Active",
+              "color": "green",
+              "position": 0
+            },
+            {
+              "id": "e791bd1f-533b-4592-810c-6f428c35b76d",
+              "value": "PAUSED",
+              "label": "Paused",
+              "color": "orange",
+              "position": 1
+            },
+            {
+              "id": "fb0bc20e-48e4-4bb2-8eeb-386401456ceb",
+              "value": "ENDED",
+              "label": "Ended",
+              "color": "gray",
+              "position": 2
+            }
+          ],
+          "defaultValue": "'ACTIVE'"
+        },
+        {
+          "universalIdentifier": "bffc8dd6-1388-400b-9b46-87b5e6ec5ece",
+          "name": "repeatMonths",
+          "label": "Repeat every (months)",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "int",
+            "decimals": 0
+          }
+        },
+        {
+          "universalIdentifier": "a0cfff3d-5bbb-4162-be39-1541c82701ca",
+          "name": "nextNeedAt",
+          "label": "Next expected need at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "50a3b218-d24e-492e-8cdd-2ab22470aa8e",
+          "name": "reviewAt",
+          "label": "Review / contact by",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "e4a5cb57-ec3f-4910-a67c-b38c337c1eca",
+          "name": "leadTimeDays",
+          "label": "Planning lead time (days)",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "476f77e8-6127-4842-b54d-b286c3abb4cb",
+          "name": "expectedQuantity",
+          "label": "Indicative quantity",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "f322fbcc-8852-4f09-9153-f737902cc509",
+          "name": "quantityUnit",
+          "label": "Quantity unit",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "294b9e1e-4592-4dbd-9b8e-d84eb5607238",
+              "value": "BOARD_FEET",
+              "label": "Board feet",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "7fee453c-b54e-4d7b-9d29-c07fbd2c716a",
+              "value": "THOUSAND_BOARD_FEET",
+              "label": "Thousand board feet (MBF)",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "a9f6b215-675c-4a16-aff6-bf084aa34607",
+              "value": "LINEAR_FEET",
+              "label": "Linear feet",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "e58e93f4-347e-42d2-8ad8-06c35429ffa2",
+              "value": "PIECES",
+              "label": "Pieces",
+              "color": "purple",
+              "position": 3
+            },
+            {
+              "id": "809cee15-d27c-4b73-b07a-3d833311ebdf",
+              "value": "BUNDLES",
+              "label": "Bundles",
+              "color": "orange",
+              "position": 4
+            },
+            {
+              "id": "b5e28238-8c76-4d5e-9dd5-187ac1894053",
+              "value": "CUBIC_METERS",
+              "label": "Cubic meters",
+              "color": "cyan",
+              "position": 5
+            },
+            {
+              "id": "cf5e3b3d-bc44-46c4-9dfd-1d7f69edafea",
+              "value": "OTHER",
+              "label": "Other — specify in notes",
+              "color": "gray",
+              "position": 6
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "24926c34-7cd3-4b2d-bc20-ab0ede874d9b",
+          "name": "notes",
+          "label": "Planning notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true,
+          "description": "Confirm quantity, price and availability with the customer before creating a new order."
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "nameSingular": "lumberCommission",
+      "namePlural": "lumberCommissions",
+      "labelSingular": "Commission",
+      "labelPlural": "Commissions",
+      "icon": "IconPercentage",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "77ded3e3-e2ba-4dd9-a008-bc32ee22b993",
+      "fields": [
+        {
+          "universalIdentifier": "77ded3e3-e2ba-4dd9-a008-bc32ee22b993",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "f9848d1d-5553-46b4-b874-d09fb57c0f75",
+              "value": "TBD",
+              "label": "Terms TBD",
+              "color": "gray",
+              "position": 0
+            },
+            {
+              "id": "fc13d56b-95cd-43ae-9b3c-f69a5844bfbf",
+              "value": "PROPOSED",
+              "label": "Terms proposed",
+              "color": "orange",
+              "position": 1
+            },
+            {
+              "id": "ba5f7a8d-a107-4dce-b76d-ec479d9d317a",
+              "value": "CONFIRMED",
+              "label": "Terms confirmed",
+              "color": "green",
+              "position": 2
+            }
+          ],
+          "defaultValue": "'TBD'"
+        },
+        {
+          "universalIdentifier": "69be5088-471d-453f-87ff-f4ede5e0577d",
+          "name": "commissionRate",
+          "label": "Commission rate (%)",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "description": "Leave unset until agreed. Zero is an agreed zero rate, not TBD.",
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "18e41389-43e4-4fd0-920a-6e47fc8acc7f",
+          "name": "eligibleBasis",
+          "label": "Eligible commission basis",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true,
+          "description": "Specify whether freight, taxes, discounts and other charges qualify."
+        },
+        {
+          "universalIdentifier": "6d1507b1-3637-49de-830a-fd9e8516e444",
+          "name": "eligibleAmount",
+          "label": "Eligible amount",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "description": "Agreed commissionable amount, which may differ from customer order value.",
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "da793f21-470f-4dd3-9146-9af394c15774",
+          "name": "expectedCommission",
+          "label": "Expected commission",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "description": "Calculated from confirmed commission terms; not money received.",
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          },
+          "disabledFieldPermissionActions": [
+            "canUpdateFieldValue"
+          ]
+        },
+        {
+          "universalIdentifier": "ff474494-1abe-4986-a637-0c8db74b24ed",
+          "name": "receivedCommission",
+          "label": "Commission received",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "description": "Cumulative commission actually received; delivery or customer payment does not imply receipt.",
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "9063a6e5-5304-4104-a8f0-9887c3b4b24f",
+          "name": "receivedAt",
+          "label": "Latest commission receipt at",
+          "type": "DATE_TIME",
+          "icon": "IconCalendar",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "7cff5547-c789-44ea-980e-d6af13e82275",
+          "name": "yourSharePercent",
+          "label": "Your proposed share (%)",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          },
+          "defaultValue": 50
+        },
+        {
+          "universalIdentifier": "589979aa-0dde-4338-82ef-ae496e59845f",
+          "name": "partnerPoolSharePercent",
+          "label": "Partner pool proposed share (%)",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          },
+          "defaultValue": 50
+        },
+        {
+          "universalIdentifier": "de0c148f-d6f6-4220-824a-f778056ca50a",
+          "name": "splitConfirmed",
+          "label": "Split agreement confirmed",
+          "type": "BOOLEAN",
+          "icon": "IconCheck",
+          "isNullable": false,
+          "defaultValue": false
+        },
+        {
+          "universalIdentifier": "e3b4f322-d8f1-42e7-b348-c170d643c970",
+          "name": "splitTerms",
+          "label": "Split agreement / partner pool",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true,
+          "description": "Confirm whether the other 50% belongs to partners collectively before calculating allocations."
+        },
+        {
+          "universalIdentifier": "77f2253e-c739-4e3c-9c9d-313e246901c4",
+          "name": "yourExpectedShare",
+          "label": "Your expected share",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          },
+          "disabledFieldPermissionActions": [
+            "canUpdateFieldValue"
+          ]
+        },
+        {
+          "universalIdentifier": "7f5d6a09-0f9f-4c4e-b3fb-1a0913edee95",
+          "name": "partnerPoolExpectedShare",
+          "label": "Partner pool expected share",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          },
+          "disabledFieldPermissionActions": [
+            "canUpdateFieldValue"
+          ]
+        },
+        {
+          "universalIdentifier": "930f4041-7709-4c20-8fc7-623ba4a1fc97",
+          "name": "yourPaid",
+          "label": "Paid to your side",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "7776d092-d54e-477b-bb0c-a8ea2f3e07df",
+          "name": "partnerPoolPaid",
+          "label": "Paid to partner pool",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "13bf3932-87fc-463e-9038-1eeef22dc9c4",
+          "name": "payoutNotes",
+          "label": "Partner payout notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "1d263139-650b-4cad-9451-f64738e54138",
+          "name": "notes",
+          "label": "Commission notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "nameSingular": "lumberProduct",
+      "namePlural": "lumberProducts",
+      "labelSingular": "Product",
+      "labelPlural": "Products",
+      "icon": "IconBox",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "7d83cee6-69ff-480a-b88b-df0a760a2116",
+      "fields": [
+        {
+          "universalIdentifier": "7d83cee6-69ff-480a-b88b-df0a760a2116",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "d2da386d-02d3-47f5-a8f3-b0b3a757f91b",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "d71bf3f5-f510-4488-8ce9-2dfffad3e428",
+              "value": "SAMPLE",
+              "label": "Sample / evaluating",
+              "color": "orange",
+              "position": 0
+            },
+            {
+              "id": "bf66ded0-adb9-4166-b53a-43f518144a07",
+              "value": "AVAILABLE",
+              "label": "Available",
+              "color": "green",
+              "position": 1
+            },
+            {
+              "id": "4c4e595a-98cf-4feb-bb41-ffece9bd96df",
+              "value": "UNAVAILABLE",
+              "label": "Unavailable",
+              "color": "gray",
+              "position": 2
+            }
+          ],
+          "defaultValue": "'SAMPLE'"
+        },
+        {
+          "universalIdentifier": "bc8dc1f8-af84-4d5e-9729-20f69a246ae2",
+          "name": "species",
+          "label": "Species",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "8a171456-4e6a-4cb9-8003-f422618dc87b",
+          "name": "grade",
+          "label": "Grade",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "83fe25cc-d160-451d-b9a8-ef14aa05f0a0",
+          "name": "dimensions",
+          "label": "Dimensions",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "7d94c60b-cb10-43a0-b57b-db4a82a35157",
+          "name": "treatment",
+          "label": "Treatment / finish",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "21493f41-9cf2-473a-a489-a138f4910b7b",
+          "name": "quantityUnit",
+          "label": "Quantity unit",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "aa2bf783-d61a-4804-9131-87d38092560c",
+              "value": "BOARD_FEET",
+              "label": "Board feet",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "0eaeaeec-7a82-4175-87a3-3e7c5edceec2",
+              "value": "THOUSAND_BOARD_FEET",
+              "label": "Thousand board feet (MBF)",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "eb2046cd-b999-4737-b4c1-a8f72d934a3c",
+              "value": "LINEAR_FEET",
+              "label": "Linear feet",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "78ff26f1-840e-4f34-91f7-402cada17ab9",
+              "value": "PIECES",
+              "label": "Pieces",
+              "color": "purple",
+              "position": 3
+            },
+            {
+              "id": "07d5b75b-5493-44fe-ae13-fcd5d7078ea6",
+              "value": "BUNDLES",
+              "label": "Bundles",
+              "color": "orange",
+              "position": 4
+            },
+            {
+              "id": "21658b01-e365-46cc-be4f-15a682c814a5",
+              "value": "CUBIC_METERS",
+              "label": "Cubic meters",
+              "color": "cyan",
+              "position": 5
+            },
+            {
+              "id": "7f72f773-732c-430f-8a7d-307bf48054fd",
+              "value": "OTHER",
+              "label": "Other — specify in notes",
+              "color": "gray",
+              "position": 6
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "0cb9829a-6f8d-4328-b465-811ab9a8aab9",
+          "name": "pricingUnit",
+          "label": "Pricing unit",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "ab789128-f2bc-4871-97f7-f945a11ae527",
+              "value": "BOARD_FEET",
+              "label": "Board feet",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "4dfb0be8-0ebf-47af-b849-0d634933dd8a",
+              "value": "THOUSAND_BOARD_FEET",
+              "label": "Thousand board feet (MBF)",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "971d88ed-2476-4fcb-bd3b-c83edb61bbfb",
+              "value": "LINEAR_FEET",
+              "label": "Linear feet",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "018e986c-c4af-42f4-8f42-327d48e633cf",
+              "value": "PIECES",
+              "label": "Pieces",
+              "color": "purple",
+              "position": 3
+            },
+            {
+              "id": "0e3f728f-c61f-4689-9be7-0d302bec5ec9",
+              "value": "BUNDLES",
+              "label": "Bundles",
+              "color": "orange",
+              "position": 4
+            },
+            {
+              "id": "986ee87e-ffac-4ab6-b4c4-ed1bf7cc6749",
+              "value": "CUBIC_METERS",
+              "label": "Cubic meters",
+              "color": "cyan",
+              "position": 5
+            },
+            {
+              "id": "0fea6051-bbc4-4e88-be02-b26283204ea8",
+              "value": "OTHER",
+              "label": "Other — specify in notes",
+              "color": "gray",
+              "position": 6
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "064bcb91-4f62-433c-89f1-c2de4ae23c4a",
+          "name": "referencePrice",
+          "label": "Reference price",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "description": "Indicative price per pricing unit; each order records its own agreed terms.",
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "02aff32c-86bd-4ced-8461-00717f1ac648",
+          "name": "leadTimeDays",
+          "label": "Estimated lead time (days)",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "7cdad15a-1d44-41df-bf98-af7ebf7e592a",
+          "name": "sampleReference",
+          "label": "Sample reference",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "9331bca2-ee3d-46f2-aef2-464b2a99cdb2",
+          "name": "samplePhotos",
+          "label": "Sample photos",
+          "type": "FILES",
+          "icon": "IconPhoto",
+          "isNullable": true,
+          "universalSettings": {
+            "maxNumberOfValues": 10
+          }
+        },
+        {
+          "universalIdentifier": "765762bd-fc37-4ff2-9d1b-102a16f98426",
+          "name": "notes",
+          "label": "Notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "nameSingular": "lumberOrderLine",
+      "namePlural": "lumberOrderLines",
+      "labelSingular": "Order line",
+      "labelPlural": "Order lines",
+      "icon": "IconListDetails",
+      "labelIdentifierFieldMetadataUniversalIdentifier": "91417c77-d35f-4149-9c3c-80f95c384169",
+      "fields": [
+        {
+          "universalIdentifier": "91417c77-d35f-4149-9c3c-80f95c384169",
+          "name": "name",
+          "label": "Name",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": false,
+          "defaultValue": "''"
+        },
+        {
+          "universalIdentifier": "508d905f-6948-44b0-9643-c1b9c1eec079",
+          "name": "status",
+          "label": "Status",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": false,
+          "options": [
+            {
+              "id": "60b63fa1-836a-4ab6-bcbe-bbff70f994cb",
+              "value": "DRAFT",
+              "label": "Draft",
+              "color": "gray",
+              "position": 0
+            },
+            {
+              "id": "1f3287f5-c421-4dd0-b0e3-85cb0aaafc9c",
+              "value": "CONFIRMED",
+              "label": "Confirmed",
+              "color": "green",
+              "position": 1
+            },
+            {
+              "id": "7f55b35d-1650-4881-bceb-3e1b9263cc42",
+              "value": "CANCELLED",
+              "label": "Cancelled",
+              "color": "red",
+              "position": 2
+            }
+          ],
+          "defaultValue": "'DRAFT'"
+        },
+        {
+          "universalIdentifier": "29db496c-0f3d-490b-bc78-0fdaf7cce774",
+          "name": "description",
+          "label": "Agreed product specification",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        },
+        {
+          "universalIdentifier": "4e841ab9-6241-4183-b68c-0bae80baed56",
+          "name": "quantity",
+          "label": "Ordered quantity",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "e62aae2e-3933-4894-a14e-8ec49c4d1b7b",
+          "name": "quantityUnit",
+          "label": "Quantity unit",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "c4d90341-1a26-435b-a543-2a17a9f169de",
+              "value": "BOARD_FEET",
+              "label": "Board feet",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "2c5db419-a38b-444d-bac1-35e8bba83b39",
+              "value": "THOUSAND_BOARD_FEET",
+              "label": "Thousand board feet (MBF)",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "3813d77a-cf2b-419c-9674-a6bf9d31ea14",
+              "value": "LINEAR_FEET",
+              "label": "Linear feet",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "9c86a1df-eb5d-433f-a5c9-429b101f4302",
+              "value": "PIECES",
+              "label": "Pieces",
+              "color": "purple",
+              "position": 3
+            },
+            {
+              "id": "8b910f13-c608-4cf0-9fbd-886335fd9ca7",
+              "value": "BUNDLES",
+              "label": "Bundles",
+              "color": "orange",
+              "position": 4
+            },
+            {
+              "id": "0676f784-4cf5-441f-9e95-33455aedd2ec",
+              "value": "CUBIC_METERS",
+              "label": "Cubic meters",
+              "color": "cyan",
+              "position": 5
+            },
+            {
+              "id": "7948ba93-72aa-4a90-a401-7b747269d6f7",
+              "value": "OTHER",
+              "label": "Other — specify in notes",
+              "color": "gray",
+              "position": 6
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "7794d53f-f457-408e-b5a9-f82938b3800b",
+          "name": "pricingQuantity",
+          "label": "Pricing quantity",
+          "type": "NUMBER",
+          "icon": "IconNumber",
+          "isNullable": true,
+          "description": "Quantity expressed in the pricing unit; do not multiply board feet by a per-MBF price without conversion.",
+          "universalSettings": {
+            "dataType": "float",
+            "decimals": 4
+          }
+        },
+        {
+          "universalIdentifier": "8e90ffbd-a670-4587-b52e-ea53644e3078",
+          "name": "pricingUnit",
+          "label": "Pricing unit",
+          "type": "SELECT",
+          "icon": "IconList",
+          "isNullable": true,
+          "options": [
+            {
+              "id": "c1f5283f-00ce-48a4-bb8c-985c80056b02",
+              "value": "BOARD_FEET",
+              "label": "Board feet",
+              "color": "blue",
+              "position": 0
+            },
+            {
+              "id": "e7dd9b7c-0a20-44c0-ac34-888a4372f98a",
+              "value": "THOUSAND_BOARD_FEET",
+              "label": "Thousand board feet (MBF)",
+              "color": "sky",
+              "position": 1
+            },
+            {
+              "id": "6d07b2fb-11db-4916-a069-038c865181da",
+              "value": "LINEAR_FEET",
+              "label": "Linear feet",
+              "color": "green",
+              "position": 2
+            },
+            {
+              "id": "bb75685f-1e7d-4e35-ba0d-4a17b9548c17",
+              "value": "PIECES",
+              "label": "Pieces",
+              "color": "purple",
+              "position": 3
+            },
+            {
+              "id": "51ff5b40-7e8c-43a5-bdbf-be2f1039c770",
+              "value": "BUNDLES",
+              "label": "Bundles",
+              "color": "orange",
+              "position": 4
+            },
+            {
+              "id": "0d181321-cca2-49d2-98a1-756a27f0718e",
+              "value": "CUBIC_METERS",
+              "label": "Cubic meters",
+              "color": "cyan",
+              "position": 5
+            },
+            {
+              "id": "e0c7d62e-2f81-4341-9945-8d66c8a49887",
+              "value": "OTHER",
+              "label": "Other — specify in notes",
+              "color": "gray",
+              "position": 6
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "960d05d4-d96e-4e46-81fb-66d6261478c2",
+          "name": "unitPrice",
+          "label": "Price per pricing unit",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "270ae29f-fe34-45d1-8003-cad4fec5e279",
+          "name": "lineValue",
+          "label": "Agreed line value",
+          "type": "CURRENCY",
+          "icon": "IconCurrencyDollar",
+          "isNullable": true,
+          "description": "Store the agreed value; no automatic conversion between quantity and pricing units.",
+          "universalSettings": {
+            "format": "full",
+            "decimals": 2
+          }
+        },
+        {
+          "universalIdentifier": "6e98b17a-d8f1-4b78-9699-8dcad2c0171e",
+          "name": "notes",
+          "label": "Notes",
+          "type": "TEXT",
+          "icon": "IconAbc",
+          "isNullable": true
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "universalIdentifier": "146d02f8-bc2c-4ad6-914a-458b1e4dc3e7",
+      "objectUniversalIdentifier": "20202020-e674-48e5-a542-72570eee7213",
+      "name": "lumberOrders",
+      "label": "Lumber orders",
+      "type": "RELATION",
+      "icon": "IconShoppingCart",
+      "relationTargetObjectMetadataUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "relationTargetFieldMetadataUniversalIdentifier": "f219cba4-6473-4de3-8d3c-1df1417c7b8e",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "16d31adc-4481-4ae9-95e6-7a579338e0e5",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "name": "product",
+      "label": "Product",
+      "type": "RELATION",
+      "icon": "IconBox",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "relationTargetFieldMetadataUniversalIdentifier": "aef689f7-9304-49a4-a693-e4f5b6b29137",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "productId"
+      }
+    },
+    {
+      "universalIdentifier": "3235edc9-e8a9-4e94-8a22-ba1bcdd45683",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "name": "contact",
+      "label": "Customer contact",
+      "type": "RELATION",
+      "icon": "IconUser",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-e674-48e5-a542-72570eee7213",
+      "relationTargetFieldMetadataUniversalIdentifier": "908cf10f-3e02-4ed4-a450-cc3ea003f92a",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "contactId"
+      }
+    },
+    {
+      "universalIdentifier": "37b0312e-42bf-43fe-9cec-cf54252f9698",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "name": "order",
+      "label": "Order",
+      "type": "RELATION",
+      "icon": "IconShoppingCart",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "relationTargetFieldMetadataUniversalIdentifier": "649466da-c97f-4ed1-985d-62fedf9c371a",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "orderId"
+      }
+    },
+    {
+      "universalIdentifier": "37e4a777-7a9e-427f-ae1c-a76f199c1184",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "name": "sampleVisits",
+      "label": "Sample visits",
+      "type": "RELATION",
+      "icon": "IconMapPin",
+      "relationTargetObjectMetadataUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "relationTargetFieldMetadataUniversalIdentifier": "61caf972-5b59-479d-8064-40eb70cd1e5f",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberRole",
+      "label": "Lumber business role",
+      "type": "SELECT",
+      "icon": "IconList",
+      "isNullable": true,
+      "options": [
+        {
+          "id": "4e7ce3da-f627-4337-b951-a19faeca184c",
+          "value": "PROSPECT",
+          "label": "Prospect",
+          "color": "blue",
+          "position": 0
+        },
+        {
+          "id": "f590ff73-513b-4252-a661-f87e3ee0e6aa",
+          "value": "CUSTOMER",
+          "label": "Customer",
+          "color": "green",
+          "position": 1
+        },
+        {
+          "id": "d4d01070-4ca0-47a0-8732-2eac1fc43141",
+          "value": "SUPPLIER",
+          "label": "Supplier",
+          "color": "orange",
+          "position": 2
+        },
+        {
+          "id": "2d22bd38-5d3e-4fdb-92a1-f8685bddb136",
+          "value": "BOTH",
+          "label": "Customer and supplier",
+          "color": "purple",
+          "position": 3
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "4ca9d6c2-dddf-4422-a24c-3890418c9ebe",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "reorderPlans",
+      "label": "Reorder plans",
+      "type": "RELATION",
+      "icon": "IconRepeat",
+      "relationTargetObjectMetadataUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "relationTargetFieldMetadataUniversalIdentifier": "70cc9d5d-97f7-4c95-b68b-854c5b666f19",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "5d695bf8-2949-4500-9d5a-d0564d0168d5",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "customer",
+      "label": "Customer",
+      "type": "RELATION",
+      "icon": "IconBuildingSkyscraper",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "relationTargetFieldMetadataUniversalIdentifier": "b47b6f32-d8bd-4e35-9197-10b1a2fc3c55",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "customerId"
+      }
+    },
+    {
+      "universalIdentifier": "613a3c41-3cfa-4855-977c-4f173da046e7",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberFollowUpAt",
+      "label": "Lumber follow up at",
+      "type": "DATE_TIME",
+      "icon": "IconCalendar",
+      "isNullable": true
+    },
+    {
+      "universalIdentifier": "61caf972-5b59-479d-8064-40eb70cd1e5f",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "name": "product",
+      "label": "Primary sample product",
+      "type": "RELATION",
+      "icon": "IconBox",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "relationTargetFieldMetadataUniversalIdentifier": "37e4a777-7a9e-427f-ae1c-a76f199c1184",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "productId"
+      }
+    },
+    {
+      "universalIdentifier": "649466da-c97f-4ed1-985d-62fedf9c371a",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "orderLines",
+      "label": "Order lines",
+      "type": "RELATION",
+      "icon": "IconListDetails",
+      "relationTargetObjectMetadataUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "relationTargetFieldMetadataUniversalIdentifier": "37b0312e-42bf-43fe-9cec-cf54252f9698",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "672e6373-3fe9-4a32-baa7-4822aba9344a",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "name": "supplier",
+      "label": "Preferred supplier",
+      "type": "RELATION",
+      "icon": "IconBuildingSkyscraper",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "relationTargetFieldMetadataUniversalIdentifier": "9e928db4-99c1-4885-b693-4a20873b3542",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "supplierId"
+      }
+    },
+    {
+      "universalIdentifier": "6a031f40-31c1-47c8-ae7a-50b54be25960",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "supplier",
+      "label": "Supplier",
+      "type": "RELATION",
+      "icon": "IconBuildingSkyscraper",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "relationTargetFieldMetadataUniversalIdentifier": "b4acaedb-2cb1-4595-bd28-691da2c33ec0",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "supplierId"
+      }
+    },
+    {
+      "universalIdentifier": "70cc9d5d-97f7-4c95-b68b-854c5b666f19",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "name": "referenceOrder",
+      "label": "Reference order",
+      "type": "RELATION",
+      "icon": "IconShoppingCart",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "relationTargetFieldMetadataUniversalIdentifier": "4ca9d6c2-dddf-4422-a24c-3890418c9ebe",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "referenceOrderId"
+      }
+    },
+    {
+      "universalIdentifier": "725c5cd3-aaba-4a60-b001-4ae6d526f142",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "name": "customer",
+      "label": "Customer",
+      "type": "RELATION",
+      "icon": "IconBuildingSkyscraper",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "relationTargetFieldMetadataUniversalIdentifier": "d7d61a64-fa2d-4483-a6a6-f3f8d3264d8e",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "customerId"
+      }
+    },
+    {
+      "universalIdentifier": "7eb57cd5-3027-4696-802f-f354371f0501",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "name": "order",
+      "label": "Order",
+      "type": "RELATION",
+      "icon": "IconShoppingCart",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "relationTargetFieldMetadataUniversalIdentifier": "929a5488-6381-48ca-a6ae-b9ba7a02031a",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "orderId"
+      }
+    },
+    {
+      "universalIdentifier": "8b04b9d2-3db9-49d2-bd69-b29064731423",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "name": "customer",
+      "label": "Customer / prospect",
+      "type": "RELATION",
+      "icon": "IconBuildingSkyscraper",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "relationTargetFieldMetadataUniversalIdentifier": "f596bea6-b19a-459c-baa5-f263a65a351c",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "customerId"
+      }
+    },
+    {
+      "universalIdentifier": "908cf10f-3e02-4ed4-a450-cc3ea003f92a",
+      "objectUniversalIdentifier": "20202020-e674-48e5-a542-72570eee7213",
+      "name": "lumberSiteVisits",
+      "label": "Lumber site visits",
+      "type": "RELATION",
+      "icon": "IconMapPin",
+      "relationTargetObjectMetadataUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "relationTargetFieldMetadataUniversalIdentifier": "3235edc9-e8a9-4e94-8a22-ba1bcdd45683",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "929a5488-6381-48ca-a6ae-b9ba7a02031a",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "commissions",
+      "label": "Commissions",
+      "type": "RELATION",
+      "icon": "IconPercentage",
+      "relationTargetObjectMetadataUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "relationTargetFieldMetadataUniversalIdentifier": "7eb57cd5-3027-4696-802f-f354371f0501",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "9cfbb84f-4649-406e-a47c-945572a461bf",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "name": "orderLine",
+      "label": "Order line",
+      "type": "RELATION",
+      "icon": "IconListDetails",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "relationTargetFieldMetadataUniversalIdentifier": "f6cac4ab-6379-49ba-8239-6af57514ef10",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "orderLineId"
+      }
+    },
+    {
+      "universalIdentifier": "9e928db4-99c1-4885-b693-4a20873b3542",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberSupplierReorderPlans",
+      "label": "Supplier reorder plans",
+      "type": "RELATION",
+      "icon": "IconRepeat",
+      "relationTargetObjectMetadataUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "relationTargetFieldMetadataUniversalIdentifier": "672e6373-3fe9-4a32-baa7-4822aba9344a",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "a04ce7bc-40ea-444b-a1e4-923d9cffff8e",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberCounty",
+      "label": "County",
+      "type": "TEXT",
+      "icon": "IconAbc",
+      "isNullable": true
+    },
+    {
+      "universalIdentifier": "a1232948-6770-4ead-92fd-866acfb0eae2",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberOwner",
+      "label": "Assigned lumber salesperson / partner",
+      "type": "TEXT",
+      "icon": "IconAbc",
+      "isNullable": true
+    },
+    {
+      "universalIdentifier": "aef689f7-9304-49a4-a693-e4f5b6b29137",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "name": "orderLines",
+      "label": "Order lines",
+      "type": "RELATION",
+      "icon": "IconListDetails",
+      "relationTargetObjectMetadataUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "relationTargetFieldMetadataUniversalIdentifier": "16d31adc-4481-4ae9-95e6-7a579338e0e5",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "b1ed0e06-e739-4642-b624-cf20d6a0fc23",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "name": "product",
+      "label": "Product",
+      "type": "RELATION",
+      "icon": "IconBox",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "relationTargetFieldMetadataUniversalIdentifier": "b84260f0-6fba-49b2-81f1-723385ca2a9a",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "productId"
+      }
+    },
+    {
+      "universalIdentifier": "b47b6f32-d8bd-4e35-9197-10b1a2fc3c55",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberCustomerOrders",
+      "label": "Lumber customer orders",
+      "type": "RELATION",
+      "icon": "IconShoppingCart",
+      "relationTargetObjectMetadataUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "relationTargetFieldMetadataUniversalIdentifier": "5d695bf8-2949-4500-9d5a-d0564d0168d5",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "b4acaedb-2cb1-4595-bd28-691da2c33ec0",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberSupplierOrders",
+      "label": "Lumber supplier orders",
+      "type": "RELATION",
+      "icon": "IconShoppingCart",
+      "relationTargetObjectMetadataUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "relationTargetFieldMetadataUniversalIdentifier": "6a031f40-31c1-47c8-ae7a-50b54be25960",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "b84260f0-6fba-49b2-81f1-723385ca2a9a",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "name": "reorderPlans",
+      "label": "Reorder plans",
+      "type": "RELATION",
+      "icon": "IconRepeat",
+      "relationTargetObjectMetadataUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "relationTargetFieldMetadataUniversalIdentifier": "b1ed0e06-e739-4642-b624-cf20d6a0fc23",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "c673ed1e-40e4-412f-b856-69984b65be17",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "name": "supplier",
+      "label": "Supplier",
+      "type": "RELATION",
+      "icon": "IconBuildingSkyscraper",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "relationTargetFieldMetadataUniversalIdentifier": "f140c294-0b4e-4148-9db8-e889a4437480",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "supplierId"
+      }
+    },
+    {
+      "universalIdentifier": "cfeb743b-52a7-4cef-b621-2961f5bee8d7",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberRegion",
+      "label": "Florida service region",
+      "type": "TEXT",
+      "icon": "IconAbc",
+      "isNullable": true
+    },
+    {
+      "universalIdentifier": "d7d61a64-fa2d-4483-a6a6-f3f8d3264d8e",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberReorderPlans",
+      "label": "Lumber reorder plans",
+      "type": "RELATION",
+      "icon": "IconRepeat",
+      "relationTargetObjectMetadataUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "relationTargetFieldMetadataUniversalIdentifier": "725c5cd3-aaba-4a60-b001-4ae6d526f142",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "f140c294-0b4e-4148-9db8-e889a4437480",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberProductsSupplied",
+      "label": "Products supplied",
+      "type": "RELATION",
+      "icon": "IconBox",
+      "relationTargetObjectMetadataUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "relationTargetFieldMetadataUniversalIdentifier": "c673ed1e-40e4-412f-b856-69984b65be17",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "f219cba4-6473-4de3-8d3c-1df1417c7b8e",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "contact",
+      "label": "Customer contact",
+      "type": "RELATION",
+      "icon": "IconUser",
+      "isNullable": true,
+      "relationTargetObjectMetadataUniversalIdentifier": "20202020-e674-48e5-a542-72570eee7213",
+      "relationTargetFieldMetadataUniversalIdentifier": "146d02f8-bc2c-4ad6-914a-458b1e4dc3e7",
+      "universalSettings": {
+        "relationType": "MANY_TO_ONE",
+        "onDelete": "SET_NULL",
+        "joinColumnName": "contactId"
+      }
+    },
+    {
+      "universalIdentifier": "f596bea6-b19a-459c-baa5-f263a65a351c",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "name": "lumberSiteVisits",
+      "label": "Lumber site visits",
+      "type": "RELATION",
+      "icon": "IconMapPin",
+      "relationTargetObjectMetadataUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "relationTargetFieldMetadataUniversalIdentifier": "8b04b9d2-3db9-49d2-bd69-b29064731423",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    },
+    {
+      "universalIdentifier": "f6cac4ab-6379-49ba-8239-6af57514ef10",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "name": "shipments",
+      "label": "Shipment lots",
+      "type": "RELATION",
+      "icon": "IconTruckDelivery",
+      "relationTargetObjectMetadataUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "relationTargetFieldMetadataUniversalIdentifier": "9cfbb84f-4649-406e-a47c-945572a461bf",
+      "universalSettings": {
+        "relationType": "ONE_TO_MANY"
+      }
+    }
+  ],
+  "indexes": [],
+  "permissionFlags": [],
+  "roles": [
+    {
+      "universalIdentifier": "fd4b90e6-af9e-4b3b-930d-b21c5720eb9c",
+      "label": "Lumber Distribution default function role",
+      "description": "Read commission terms and update calculated commission amounts.",
+      "canReadAllObjectRecords": false,
+      "canUpdateAllObjectRecords": false,
+      "canSoftDeleteAllObjectRecords": false,
+      "canDestroyAllObjectRecords": false,
+      "canBeAssignedToUsers": false,
+      "canBeAssignedToApiKeys": false,
+      "objectPermissions": [
+        {
+          "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+          "canReadObjectRecords": true,
+          "canUpdateObjectRecords": true,
+          "canSoftDeleteObjectRecords": false,
+          "canDestroyObjectRecords": false,
+          "universalIdentifier": "b958840b-c373-54ef-a873-3d6b9a3c25db"
+        }
+      ],
+      "fieldPermissions": [],
+      "rowLevelPermissionPredicateGroups": [],
+      "rowLevelPermissionPredicates": [],
+      "permissionFlagUniversalIdentifiers": []
+    }
+  ],
+  "skills": [],
+  "agents": [],
+  "workflows": [],
+  "connectionProviders": [],
+  "messagingProviders": [],
+  "mcpServers": [],
+  "logicFunctions": [
+    {
+      "universalIdentifier": "0053afbd-4a6f-44b8-9a57-ca3f4346737e",
+      "name": "on-commission-updated",
+      "description": "Recalculate confirmed commissions from the current saved terms, leaving unknown earnings blank.",
+      "timeoutSeconds": 30,
+      "databaseEventTriggerSettings": {
+        "eventName": "lumberCommission.updated",
+        "batchMode": true,
+        "updatedFields": [
+          "status",
+          "commissionRate",
+          "eligibleBasis",
+          "eligibleAmount",
+          "splitConfirmed",
+          "splitTerms",
+          "yourSharePercent",
+          "partnerPoolSharePercent"
+        ]
+      },
+      "handlerName": "default.config.handler",
+      "sourceHandlerPath": "src/logic-functions/on-commission-updated.ts",
+      "builtHandlerPath": "src/logic-functions/on-commission-updated.mjs",
+      "builtHandlerChecksum": "63104245277742172f38124d188fd884"
+    },
+    {
+      "universalIdentifier": "47acbed0-1321-4ea2-bc02-57115077f07b",
+      "name": "calculate-commissions",
+      "description": "Preview USD commissions and confirmed partner-pool splits without changing records.",
+      "timeoutSeconds": 5,
+      "httpRouteTriggerSettings": {
+        "path": "/calculate-commissions",
+        "httpMethod": "POST",
+        "isAuthRequired": true
+      },
+      "handlerName": "default.config.handler",
+      "sourceHandlerPath": "src/logic-functions/calculate-commissions.ts",
+      "builtHandlerPath": "src/logic-functions/calculate-commissions.mjs",
+      "builtHandlerChecksum": "3b40bf95060afe2bf048de3cc10cf7cf"
+    },
+    {
+      "universalIdentifier": "6ef09aaf-88df-4f93-9e46-6d61247952ef",
+      "name": "on-commission-created",
+      "description": "Recalculate confirmed commissions from the current saved terms, leaving unknown earnings blank.",
+      "timeoutSeconds": 30,
+      "databaseEventTriggerSettings": {
+        "eventName": "lumberCommission.created",
+        "batchMode": true
+      },
+      "handlerName": "default.config.handler",
+      "sourceHandlerPath": "src/logic-functions/on-commission-created.ts",
+      "builtHandlerPath": "src/logic-functions/on-commission-created.mjs",
+      "builtHandlerChecksum": "f48644462a327117365f2b6eae526ef3"
+    },
+    {
+      "universalIdentifier": "8888fbe0-3eba-4dd2-9298-1864e95f5da8",
+      "name": "plan-reorders",
+      "description": "Preview reorder review dates and calendar-month intervals without creating orders.",
+      "timeoutSeconds": 5,
+      "httpRouteTriggerSettings": {
+        "path": "/plan-reorders",
+        "httpMethod": "POST",
+        "isAuthRequired": true
+      },
+      "handlerName": "default.config.handler",
+      "sourceHandlerPath": "src/logic-functions/plan-reorders.ts",
+      "builtHandlerPath": "src/logic-functions/plan-reorders.mjs",
+      "builtHandlerChecksum": "4ca7b25e821f514af11102d8b56d4445"
+    },
+    {
+      "universalIdentifier": "b9f54630-625d-4834-a01d-f613169946a0",
+      "name": "health-check",
+      "handlerName": "default.config.handler",
+      "sourceHandlerPath": "src/logic-functions/health-check.ts",
+      "builtHandlerPath": "src/logic-functions/health-check.mjs",
+      "builtHandlerChecksum": "089adfbd53bbd55c0d36fc13432d449c"
+    }
+  ],
+  "frontComponents": [],
+  "publicAssets": [
+    {
+      "filePath": "public/logo.svg",
+      "fileName": "logo.svg",
+      "fileType": "svg",
+      "checksum": "bd730e6bf444a340373a4d713772eece"
+    }
+  ],
+  "views": [
+    {
+      "universalIdentifier": "191ebca1-fb4c-49b6-a51f-c07c0d442fb2",
+      "name": "Commission details",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "b7a6f218-a140-48ab-8bf8-f29acb3ca8a0",
+          "fieldMetadataUniversalIdentifier": "77ded3e3-e2ba-4dd9-a008-bc32ee22b993",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "e95de5b9-4e07-4858-ae8c-606cf7e202d1",
+          "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f79ee352-5677-4d68-872d-1a87c7726958",
+          "fieldMetadataUniversalIdentifier": "69be5088-471d-453f-87ff-f4ede5e0577d",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "24f8c377-a39f-40cb-be73-c21b9b4e4d10",
+          "fieldMetadataUniversalIdentifier": "18e41389-43e4-4fd0-920a-6e47fc8acc7f",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "9989f169-582a-4f9c-b168-5b7344c15ea5",
+          "fieldMetadataUniversalIdentifier": "6d1507b1-3637-49de-830a-fd9e8516e444",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "9e6ba69d-4e23-4dce-b915-237e4dfdcfc7",
+          "fieldMetadataUniversalIdentifier": "da793f21-470f-4dd3-9146-9af394c15774",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4c3bf773-c720-4308-b3cf-034681dbdbbc",
+          "fieldMetadataUniversalIdentifier": "ff474494-1abe-4986-a637-0c8db74b24ed",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "a13a6963-f187-4cd4-9ac6-8bd209e95dcf",
+          "fieldMetadataUniversalIdentifier": "9063a6e5-5304-4104-a8f0-9887c3b4b24f",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "e79dad6c-6314-454c-a152-1765fad6cf11",
+          "fieldMetadataUniversalIdentifier": "7cff5547-c789-44ea-980e-d6af13e82275",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "0b050336-82e0-4c22-881b-2f58d8412ea8",
+          "fieldMetadataUniversalIdentifier": "589979aa-0dde-4338-82ef-ae496e59845f",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "cf782ad6-c468-4d87-bd5c-ab579b0f4788",
+          "fieldMetadataUniversalIdentifier": "de0c148f-d6f6-4220-824a-f778056ca50a",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "a7cac300-ef6e-4bdb-a1da-f4ecb5c1b60a",
+          "fieldMetadataUniversalIdentifier": "e3b4f322-d8f1-42e7-b348-c170d643c970",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "cc8317a0-c771-4272-94af-c84bc709327b",
+          "fieldMetadataUniversalIdentifier": "77f2253e-c739-4e3c-9c9d-313e246901c4",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5a4a4723-18a8-4751-bc16-a452b843bbd0",
+          "fieldMetadataUniversalIdentifier": "7f5d6a09-0f9f-4c4e-b3fb-1a0913edee95",
+          "position": 13,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "10744eba-ef5c-404d-8682-ae0863be2e50",
+          "fieldMetadataUniversalIdentifier": "930f4041-7709-4c20-8fc7-623ba4a1fc97",
+          "position": 14,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7a477df3-2c1c-4b87-81ae-fbd6f6c025f7",
+          "fieldMetadataUniversalIdentifier": "7776d092-d54e-477b-bb0c-a8ea2f3e07df",
+          "position": 15,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4c71a5d7-07dc-4a7c-8134-5290570ee048",
+          "fieldMetadataUniversalIdentifier": "13bf3932-87fc-463e-9038-1eeef22dc9c4",
+          "position": 16,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4a5b52c1-6cda-400c-a3b3-c5cfccd1af95",
+          "fieldMetadataUniversalIdentifier": "1d263139-650b-4cad-9451-f64738e54138",
+          "position": 17,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3a342bba-1eef-441f-b504-0630a5174fa5",
+          "fieldMetadataUniversalIdentifier": "7eb57cd5-3027-4696-802f-f354371f0501",
+          "position": 18,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "199d772f-21a7-4622-97d9-784c53aa565a",
+      "name": "Order lines",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "type": "TABLE",
+      "icon": "IconListDetails",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "519576c4-735e-430e-b69d-e740a7b2701e",
+          "fieldMetadataUniversalIdentifier": "91417c77-d35f-4149-9c3c-80f95c384169",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "ad5f39ed-a37f-474f-8740-9b7b238cfad8",
+          "fieldMetadataUniversalIdentifier": "508d905f-6948-44b0-9643-c1b9c1eec079",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d9ef8718-cecb-4648-b85e-0f112d1c74e4",
+          "fieldMetadataUniversalIdentifier": "37b0312e-42bf-43fe-9cec-cf54252f9698",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "e7821638-bff2-496c-8785-1126b2702215",
+          "fieldMetadataUniversalIdentifier": "16d31adc-4481-4ae9-95e6-7a579338e0e5",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "c554d041-e149-4278-bb18-2715f6dfea05",
+          "fieldMetadataUniversalIdentifier": "4e841ab9-6241-4183-b68c-0bae80baed56",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "789fd7f6-6ab2-4259-a8e0-1d206ef80f14",
+          "fieldMetadataUniversalIdentifier": "e62aae2e-3933-4894-a14e-8ec49c4d1b7b",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ce6cbb38-4bb0-481b-84bc-82ef7dd4ac6e",
+          "fieldMetadataUniversalIdentifier": "7794d53f-f457-408e-b5a9-f82938b3800b",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ff133b74-e642-4aff-b3c4-6d056e60f256",
+          "fieldMetadataUniversalIdentifier": "8e90ffbd-a670-4587-b52e-ea53644e3078",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "de627cda-9314-459f-840e-3c3b23a56a73",
+          "fieldMetadataUniversalIdentifier": "960d05d4-d96e-4e46-81fb-66d6261478c2",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "eee82f3e-c407-4699-b677-0e8046c83f30",
+          "fieldMetadataUniversalIdentifier": "270ae29f-fe34-45d1-8003-cad4fec5e279",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "1ef1512a-4969-45ae-83a5-65490555dc2f",
+      "name": "Products",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "type": "TABLE",
+      "icon": "IconBox",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "7df8b234-36b0-4760-9789-999ea2578ecb",
+          "fieldMetadataUniversalIdentifier": "7d83cee6-69ff-480a-b88b-df0a760a2116",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "845be3ce-75d5-416a-9c05-178085f24a0a",
+          "fieldMetadataUniversalIdentifier": "d2da386d-02d3-47f5-a8f3-b0b3a757f91b",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "c10ef2fd-8148-48ca-afb7-f8177ab8b48b",
+          "fieldMetadataUniversalIdentifier": "c673ed1e-40e4-412f-b856-69984b65be17",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "da6e3c86-70a3-4310-aed7-9999a551de88",
+          "fieldMetadataUniversalIdentifier": "bc8dc1f8-af84-4d5e-9729-20f69a246ae2",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4eb2f436-8e65-488b-bfad-9e1ff4e4be51",
+          "fieldMetadataUniversalIdentifier": "8a171456-4e6a-4cb9-8003-f422618dc87b",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ad52e26d-407c-4988-8cfb-e7f3ad157942",
+          "fieldMetadataUniversalIdentifier": "83fe25cc-d160-451d-b9a8-ef14aa05f0a0",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5bd24ace-fb30-4457-a729-0b9a3e071f55",
+          "fieldMetadataUniversalIdentifier": "21493f41-9cf2-473a-a489-a138f4910b7b",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "1174c29b-a8c5-408d-bd5a-ab21d5b4e324",
+          "fieldMetadataUniversalIdentifier": "0cb9829a-6f8d-4328-b465-811ab9a8aab9",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "cd84d14d-dd6d-44e2-ad4b-247da368c2a8",
+          "fieldMetadataUniversalIdentifier": "064bcb91-4f62-433c-89f1-c2de4ae23c4a",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "e724d3b0-444b-46f1-a35f-bcd1d7a453fe",
+          "fieldMetadataUniversalIdentifier": "02aff32c-86bd-4ced-8461-00717f1ac648",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "27d4c265-4e0d-4ded-b122-6379e262ac32",
+      "name": "Order details",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "7eb6cf5d-6f88-4960-971d-a2b6e49d96fe",
+          "fieldMetadataUniversalIdentifier": "66ab3c90-7dbc-40c9-b639-de336dc5d7ff",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "ac8a6186-0b71-47cd-84e9-cc59b344269c",
+          "fieldMetadataUniversalIdentifier": "3ea3eac8-f0c2-42d0-87c4-8cbebf596ed0",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "470f79bf-57a1-4c2c-bbd8-230996e32ef6",
+          "fieldMetadataUniversalIdentifier": "af8295df-ecb1-40c5-a243-018f767f8d91",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "6373455b-9379-4529-bb87-eef609514d64",
+          "fieldMetadataUniversalIdentifier": "d0953393-2a0c-4a43-a083-4b0b72ccc49c",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "82964831-7963-49ee-a55c-8e6bda165f4e",
+          "fieldMetadataUniversalIdentifier": "82745d28-0635-4bcc-8184-aab7949a7154",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3fd3312a-cfb6-462e-ae55-dee414a73732",
+          "fieldMetadataUniversalIdentifier": "f6354f2f-7df9-4d8e-a71b-981d1b7b3018",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f3c17456-239f-4254-b051-ad80eeca8238",
+          "fieldMetadataUniversalIdentifier": "963cd62a-4c66-4aac-9089-4e09bcff7fbc",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "df186bbf-084e-484c-ab20-3f236f24e4d4",
+          "fieldMetadataUniversalIdentifier": "f98c7133-3be8-4c74-9a40-df261c0e9226",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "820e242d-287c-4863-b67d-895c1f95d849",
+          "fieldMetadataUniversalIdentifier": "f629a52f-5671-488c-9eaf-30dc416c718d",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "b0e66e84-7c4e-44ad-a7d2-c06cfa1d9000",
+          "fieldMetadataUniversalIdentifier": "423897b5-fcf3-47cc-b61c-b01bedfd8db7",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ef1cdbf8-4702-4846-bef5-9df9b003d616",
+          "fieldMetadataUniversalIdentifier": "3967c071-e6b9-4d3f-a01f-ee311cf14b94",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5a0fb1ad-5ef3-4d24-9686-cce50914f0cb",
+          "fieldMetadataUniversalIdentifier": "5d695bf8-2949-4500-9d5a-d0564d0168d5",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5d8f1dfd-5ee0-4dd0-b1ce-e020c627a862",
+          "fieldMetadataUniversalIdentifier": "6a031f40-31c1-47c8-ae7a-50b54be25960",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "725b739c-4e66-4e44-b7c1-f23bc7e5879b",
+          "fieldMetadataUniversalIdentifier": "f219cba4-6473-4de3-8d3c-1df1417c7b8e",
+          "position": 13,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "57564c17-5fb3-4b8a-a8e3-aa27f403fbff",
+          "fieldMetadataUniversalIdentifier": "649466da-c97f-4ed1-985d-62fedf9c371a",
+          "position": 14,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "240ac15e-03e2-4e07-bc55-6047e4e131c8",
+          "fieldMetadataUniversalIdentifier": "4ca9d6c2-dddf-4422-a24c-3890418c9ebe",
+          "position": 15,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "a08ad013-9369-472e-8d0e-6150e555a8ef",
+          "fieldMetadataUniversalIdentifier": "929a5488-6381-48ca-a6ae-b9ba7a02031a",
+          "position": 16,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "330e41b4-6793-4275-ba64-2ee8d2736369",
+      "name": "Lumber prospects",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "type": "TABLE",
+      "icon": "IconBuildingSkyscraper",
+      "position": 12,
+      "fields": [
+        {
+          "universalIdentifier": "8ab8db8b-4cbd-488a-8d5f-6d39513cd59a",
+          "fieldMetadataUniversalIdentifier": "20202020-4d99-4e2e-a84c-4a27837b1ece",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "a34ee4e7-f6b9-4eba-a159-fae671676ced",
+          "fieldMetadataUniversalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "40083d3e-a93a-403c-b608-915383f61f32",
+          "fieldMetadataUniversalIdentifier": "cfeb743b-52a7-4cef-b621-2961f5bee8d7",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "20b4d8ae-dc58-4b75-956f-d0cc34ab31fd",
+          "fieldMetadataUniversalIdentifier": "a04ce7bc-40ea-444b-a1e4-923d9cffff8e",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ffc92801-07a0-4891-ae82-4748f76177cd",
+          "fieldMetadataUniversalIdentifier": "a1232948-6770-4ead-92fd-866acfb0eae2",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "1713f829-47a6-4bf6-94b9-96164bd86a88",
+          "fieldMetadataUniversalIdentifier": "613a3c41-3cfa-4855-977c-4f173da046e7",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "69855baf-8f41-409f-a87c-c12f2b482a8b",
+          "fieldMetadataUniversalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+          "operand": "IS",
+          "value": [
+            "PROSPECT"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "5db0f5f1-c4d0-4656-8e23-793d06b5eebf",
+      "name": "Commissions",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "type": "TABLE",
+      "icon": "IconPercentage",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "d11d4a0b-33ac-4ef7-b036-0d4031af5146",
+          "fieldMetadataUniversalIdentifier": "77ded3e3-e2ba-4dd9-a008-bc32ee22b993",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "56f89dde-5aeb-4523-823c-3ed7cb3a6cc8",
+          "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "6f8c0747-d42a-4961-823d-1cd3a4dcedce",
+          "fieldMetadataUniversalIdentifier": "7eb57cd5-3027-4696-802f-f354371f0501",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3cb722f1-5e1e-48c2-a5e1-e149755bd1b7",
+          "fieldMetadataUniversalIdentifier": "69be5088-471d-453f-87ff-f4ede5e0577d",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "38deb55e-2fc8-41d3-be0f-d30cd23ae19a",
+          "fieldMetadataUniversalIdentifier": "6d1507b1-3637-49de-830a-fd9e8516e444",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "8ee15e17-9e4f-4bea-92da-128ab1e44cbc",
+          "fieldMetadataUniversalIdentifier": "da793f21-470f-4dd3-9146-9af394c15774",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "fc041be5-043b-48ca-85b5-744abf7cecc9",
+          "fieldMetadataUniversalIdentifier": "ff474494-1abe-4986-a637-0c8db74b24ed",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f789ee99-e0d4-45e4-8c98-a829229fa045",
+          "fieldMetadataUniversalIdentifier": "de0c148f-d6f6-4220-824a-f778056ca50a",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "771aad83-f496-4e92-9cb9-354ff6d03a3b",
+          "fieldMetadataUniversalIdentifier": "77f2253e-c739-4e3c-9c9d-313e246901c4",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "211cb738-59e3-42ab-b93f-5fe5f090bbcf",
+          "fieldMetadataUniversalIdentifier": "7776d092-d54e-477b-bb0c-a8ea2f3e07df",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "645c1514-b5fe-4faf-b363-391385a61e47",
+      "name": "Site visit details",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "04e08726-0b24-4578-a797-94086959ae9a",
+          "fieldMetadataUniversalIdentifier": "8ea32c22-889b-41fc-8e8b-f869df747eee",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "31f777d3-257e-476f-93ad-79c344dc802e",
+          "fieldMetadataUniversalIdentifier": "171a7a7d-fe64-4603-afbf-d1ec4eede52d",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "9c830c32-ccf2-4e9d-8ac7-50080da92c47",
+          "fieldMetadataUniversalIdentifier": "c6d9582d-ff05-4ab9-a6e8-38424ab59464",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "854ce842-3540-406d-beeb-650dea40802e",
+          "fieldMetadataUniversalIdentifier": "4508220f-01d3-4a2a-a37d-d98861d78815",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "061ad8a7-3129-4c07-ae57-4e78ab38731f",
+          "fieldMetadataUniversalIdentifier": "c9f78e61-11b2-4549-ba7b-a300c368cb69",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "19155a75-9a1e-4b6f-b2d1-abf320fe1656",
+          "fieldMetadataUniversalIdentifier": "0312caf8-eae6-458b-848e-cd5d340b3921",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "25ac64d6-e4c0-4967-8368-a116fabdc671",
+          "fieldMetadataUniversalIdentifier": "0dcfdecf-4679-4388-9f7a-ae15f76d0b73",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "db816027-15ed-4073-8a62-f24f151d7ad8",
+          "fieldMetadataUniversalIdentifier": "1f4a9cce-a2bb-4b95-bd66-8bfb6cd3daad",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "0712e1fc-20f9-456e-aa7d-d888898f9ea7",
+          "fieldMetadataUniversalIdentifier": "77e902b7-c0bd-43a2-b3be-de9c4c640e4c",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "71dd0dc2-c38c-42df-95dd-7f2327e0898d",
+          "fieldMetadataUniversalIdentifier": "5dea08b1-edb7-4120-ae80-745a890f32a0",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3f96fda1-833e-4c16-8f84-8e5ac18bd7eb",
+          "fieldMetadataUniversalIdentifier": "8b04b9d2-3db9-49d2-bd69-b29064731423",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "bd321a3c-ac3e-44c3-b391-035c30bf4ffa",
+          "fieldMetadataUniversalIdentifier": "3235edc9-e8a9-4e94-8a22-ba1bcdd45683",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "109ef809-a1ba-465c-9524-d178a166cca9",
+          "fieldMetadataUniversalIdentifier": "61caf972-5b59-479d-8064-40eb70cd1e5f",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "6e37dc15-3694-4c7e-8355-593f5d30ab42",
+      "name": "Orders",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "type": "TABLE",
+      "icon": "IconShoppingCart",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "45773359-f87e-483c-af7b-6ab4a7f42ee8",
+          "fieldMetadataUniversalIdentifier": "66ab3c90-7dbc-40c9-b639-de336dc5d7ff",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "d5e6dc00-daa2-4585-a0d9-9e0e3e380d55",
+          "fieldMetadataUniversalIdentifier": "3ea3eac8-f0c2-42d0-87c4-8cbebf596ed0",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "17cc265a-7873-453a-88bc-bfec96e0fd56",
+          "fieldMetadataUniversalIdentifier": "5d695bf8-2949-4500-9d5a-d0564d0168d5",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ab828363-680b-4ce9-8d27-6faf559c8a38",
+          "fieldMetadataUniversalIdentifier": "6a031f40-31c1-47c8-ae7a-50b54be25960",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "fb2be466-d9f1-4bc6-8f01-d37493273c17",
+          "fieldMetadataUniversalIdentifier": "af8295df-ecb1-40c5-a243-018f767f8d91",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "a01da33a-2dfd-421b-98cd-af636be1e052",
+          "fieldMetadataUniversalIdentifier": "d0953393-2a0c-4a43-a083-4b0b72ccc49c",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ccd61c3a-9ce4-41c3-9af1-5a1858ffbf43",
+          "fieldMetadataUniversalIdentifier": "963cd62a-4c66-4aac-9089-4e09bcff7fbc",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "703b129b-9240-4aed-ad6d-3ac6b959afa9",
+      "name": "Active reorder plans",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "type": "TABLE",
+      "icon": "IconRepeat",
+      "position": 1,
+      "fields": [
+        {
+          "universalIdentifier": "6fb5641c-7258-4689-b6d7-6bc55e823bbd",
+          "fieldMetadataUniversalIdentifier": "1ced4ee3-24d6-4229-b744-d75a701a3e58",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "41df62a3-084e-41e2-87db-b128a89153dd",
+          "fieldMetadataUniversalIdentifier": "48fa6526-bd17-41d7-8792-d7005afa224a",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "22be92d4-f100-4cf0-a49f-2980230aff61",
+          "fieldMetadataUniversalIdentifier": "725c5cd3-aaba-4a60-b001-4ae6d526f142",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "c2d6e94a-52e1-4ed4-8ad0-c003a5752156",
+          "fieldMetadataUniversalIdentifier": "b1ed0e06-e739-4642-b624-cf20d6a0fc23",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "01796e24-114b-4348-b474-2e6eae2a6609",
+          "fieldMetadataUniversalIdentifier": "bffc8dd6-1388-400b-9b46-87b5e6ec5ece",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f744a56d-a12c-4f2c-a5b7-c3e28421e037",
+          "fieldMetadataUniversalIdentifier": "a0cfff3d-5bbb-4162-be39-1541c82701ca",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "025fe4ed-7f02-4333-a0b3-c98b386761b2",
+          "fieldMetadataUniversalIdentifier": "50a3b218-d24e-492e-8cdd-2ab22470aa8e",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "34ad512d-28ae-4eb0-8c99-5fb7682171bd",
+          "fieldMetadataUniversalIdentifier": "e4a5cb57-ec3f-4910-a67c-b38c337c1eca",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "fa5cc9df-ffa7-4aa8-9984-da6ea5be01ee",
+          "fieldMetadataUniversalIdentifier": "48fa6526-bd17-41d7-8792-d7005afa224a",
+          "operand": "IS",
+          "value": [
+            "ACTIVE"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "70c53220-572a-4ade-92a4-cb6d753c697f",
+      "name": "Lumber customers",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "type": "TABLE",
+      "icon": "IconBuildingSkyscraper",
+      "position": 13,
+      "fields": [
+        {
+          "universalIdentifier": "ca70bd24-76cd-494c-bf2c-7769bde5868f",
+          "fieldMetadataUniversalIdentifier": "20202020-4d99-4e2e-a84c-4a27837b1ece",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "84818851-ad11-4961-8237-49fbf2282d24",
+          "fieldMetadataUniversalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "e03ea092-2d77-44a5-a46c-0bace741171a",
+          "fieldMetadataUniversalIdentifier": "cfeb743b-52a7-4cef-b621-2961f5bee8d7",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "83ed11c5-2db9-48df-8da4-1cb6455b8e82",
+          "fieldMetadataUniversalIdentifier": "a04ce7bc-40ea-444b-a1e4-923d9cffff8e",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "9f3fcaf4-2bca-4463-82ab-488da84b0dc1",
+          "fieldMetadataUniversalIdentifier": "a1232948-6770-4ead-92fd-866acfb0eae2",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "55501772-37d7-4676-938f-5e6669b166d0",
+          "fieldMetadataUniversalIdentifier": "613a3c41-3cfa-4855-977c-4f173da046e7",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "c9b1eb11-8b3d-42d8-90b8-d142433bf164",
+          "fieldMetadataUniversalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+          "operand": "IS",
+          "value": [
+            "CUSTOMER",
+            "BOTH"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "7e82143d-c61f-4823-98a5-10dfbdda165e",
+      "name": "Planned site visits",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "type": "TABLE",
+      "icon": "IconMapPin",
+      "position": 1,
+      "fields": [
+        {
+          "universalIdentifier": "0c89c087-4e60-4d55-b3a9-f5b4b3d22a1b",
+          "fieldMetadataUniversalIdentifier": "8ea32c22-889b-41fc-8e8b-f869df747eee",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "57339191-e83a-4829-8ebd-a2727ce656d1",
+          "fieldMetadataUniversalIdentifier": "171a7a7d-fe64-4603-afbf-d1ec4eede52d",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "a24fc523-860b-4112-9916-205b0fe19f56",
+          "fieldMetadataUniversalIdentifier": "8b04b9d2-3db9-49d2-bd69-b29064731423",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "e8ebf235-a9dc-4718-b4b3-9e546364d80f",
+          "fieldMetadataUniversalIdentifier": "3235edc9-e8a9-4e94-8a22-ba1bcdd45683",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5a34e7eb-63b7-4daf-8327-0edf9440e052",
+          "fieldMetadataUniversalIdentifier": "c6d9582d-ff05-4ab9-a6e8-38424ab59464",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "b777dfd0-ffc9-4ff4-afa9-d3b25817b1d9",
+          "fieldMetadataUniversalIdentifier": "77e902b7-c0bd-43a2-b3be-de9c4c640e4c",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "0198fce8-e520-403b-b3ec-7e5e346d3f69",
+          "fieldMetadataUniversalIdentifier": "c9f78e61-11b2-4549-ba7b-a300c368cb69",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "645ab76c-e221-4b7f-a286-54d1b06804e4",
+          "fieldMetadataUniversalIdentifier": "0dcfdecf-4679-4388-9f7a-ae15f76d0b73",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "640f2d6e-194e-43e8-8c3a-16bbcd0eac54",
+          "fieldMetadataUniversalIdentifier": "171a7a7d-fe64-4603-afbf-d1ec4eede52d",
+          "operand": "IS",
+          "value": [
+            "PLANNED"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "8b6f8c25-c6a8-4218-b16a-780235f45df4",
+      "name": "Reorder plans",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "type": "TABLE",
+      "icon": "IconRepeat",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "12a95ba9-4da5-489c-a700-61b96c622e33",
+          "fieldMetadataUniversalIdentifier": "1ced4ee3-24d6-4229-b744-d75a701a3e58",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "a92b2a15-fdb4-4ed9-836a-f0d982e2e3b8",
+          "fieldMetadataUniversalIdentifier": "48fa6526-bd17-41d7-8792-d7005afa224a",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "080313e6-424a-46c5-bd19-85aced36db73",
+          "fieldMetadataUniversalIdentifier": "725c5cd3-aaba-4a60-b001-4ae6d526f142",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7055c824-22a5-4913-ba24-d92a8464c901",
+          "fieldMetadataUniversalIdentifier": "b1ed0e06-e739-4642-b624-cf20d6a0fc23",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "124f828f-9967-467c-8a8b-bc19091f709c",
+          "fieldMetadataUniversalIdentifier": "bffc8dd6-1388-400b-9b46-87b5e6ec5ece",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "53c8ea7c-1225-4a41-9e89-8b0905fdd8ae",
+          "fieldMetadataUniversalIdentifier": "a0cfff3d-5bbb-4162-be39-1541c82701ca",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5fe34cda-2c41-4a8b-8ebc-ca2acb9be5c9",
+          "fieldMetadataUniversalIdentifier": "50a3b218-d24e-492e-8cdd-2ab22470aa8e",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "37f3e080-6b92-4555-b506-b0eafe7dbaaa",
+          "fieldMetadataUniversalIdentifier": "e4a5cb57-ec3f-4910-a67c-b38c337c1eca",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "8d1e977a-ac55-4050-94f6-6bc86d85576f",
+      "name": "Shipment lots",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "type": "TABLE",
+      "icon": "IconTruckDelivery",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "77e26661-e790-486c-932d-5b4a3187dd82",
+          "fieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "d08ca2e1-42ef-4b07-9a3d-ce7a946b1bc3",
+          "fieldMetadataUniversalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "6fdf4f08-28c3-41e3-9b7f-46bcb4069c34",
+          "fieldMetadataUniversalIdentifier": "7c14ee70-e536-46b0-bc96-005fb6b3324c",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f4014be4-123c-4f45-8124-624a21aab839",
+          "fieldMetadataUniversalIdentifier": "9cfbb84f-4649-406e-a47c-945572a461bf",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "eccac5a2-dd95-4497-8a1b-e1ed937cabed",
+          "fieldMetadataUniversalIdentifier": "9fefb5cb-6c3f-4806-aa4c-5919e7eaa556",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3f6fd068-50c3-464a-bb60-4497ec127011",
+          "fieldMetadataUniversalIdentifier": "69fa0e54-cdb6-4282-b58a-9f561ea628bc",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "85b62829-3bde-4186-a9e5-6aefba4919fb",
+          "fieldMetadataUniversalIdentifier": "f7b1ff3a-3d39-4276-9e76-0cdfe7c4fb6c",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d0200736-96cf-4d03-bd57-946f89c0b65a",
+          "fieldMetadataUniversalIdentifier": "89a0d5cb-f698-4c76-9e20-0be4c685d51f",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7e5ddb68-5ef8-4400-82f2-cd4b2f1a5fdf",
+          "fieldMetadataUniversalIdentifier": "4a9005eb-9c0f-4359-bc03-62bb6386909a",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "8db1c164-f773-434b-87e1-2cd7d939cf57",
+      "name": "Product details",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "bede621b-639c-4103-b6b2-a69b997d4d7e",
+          "fieldMetadataUniversalIdentifier": "7d83cee6-69ff-480a-b88b-df0a760a2116",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "e105999e-989d-47ef-99c8-80e5dbf07fd3",
+          "fieldMetadataUniversalIdentifier": "d2da386d-02d3-47f5-a8f3-b0b3a757f91b",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "b5e16aca-eecc-4d67-92e3-4c3f3f53077f",
+          "fieldMetadataUniversalIdentifier": "bc8dc1f8-af84-4d5e-9729-20f69a246ae2",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "65c0e9ad-146f-493f-a5f7-1d3801c53a5b",
+          "fieldMetadataUniversalIdentifier": "8a171456-4e6a-4cb9-8003-f422618dc87b",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ac71f1f0-2f00-4b40-bc1a-4c6515d8807f",
+          "fieldMetadataUniversalIdentifier": "83fe25cc-d160-451d-b9a8-ef14aa05f0a0",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4c048075-4611-4c69-bd2d-6713741fd96f",
+          "fieldMetadataUniversalIdentifier": "7d94c60b-cb10-43a0-b57b-db4a82a35157",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "431b02bf-9a90-4422-afad-7bb0d589bc91",
+          "fieldMetadataUniversalIdentifier": "21493f41-9cf2-473a-a489-a138f4910b7b",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7e0143ca-ccf7-469f-b291-d4d4aaf156fb",
+          "fieldMetadataUniversalIdentifier": "0cb9829a-6f8d-4328-b465-811ab9a8aab9",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "76ef6f8a-485e-4cc1-b459-af85153cf325",
+          "fieldMetadataUniversalIdentifier": "064bcb91-4f62-433c-89f1-c2de4ae23c4a",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d4fbe705-4478-4629-93da-01a4d3c61dfa",
+          "fieldMetadataUniversalIdentifier": "02aff32c-86bd-4ced-8461-00717f1ac648",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "85356286-6960-40d3-bc08-7fd3b5e63865",
+          "fieldMetadataUniversalIdentifier": "7cdad15a-1d44-41df-bf98-af7ebf7e592a",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f9591db5-29e1-47f9-91af-f1cea436a137",
+          "fieldMetadataUniversalIdentifier": "9331bca2-ee3d-46f2-aef2-464b2a99cdb2",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "8a30ce6a-fe6c-4039-ba81-815f447ae9a6",
+          "fieldMetadataUniversalIdentifier": "765762bd-fc37-4ff2-9d1b-102a16f98426",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "c386ee03-e533-469f-93e9-2c4296448dee",
+          "fieldMetadataUniversalIdentifier": "c673ed1e-40e4-412f-b856-69984b65be17",
+          "position": 13,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "00d02e3e-7a3d-4edc-bb80-18bb3afd1df4",
+          "fieldMetadataUniversalIdentifier": "37e4a777-7a9e-427f-ae1c-a76f199c1184",
+          "position": 14,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4de7212d-6920-48c9-a141-3861df3fbad9",
+          "fieldMetadataUniversalIdentifier": "aef689f7-9304-49a4-a693-e4f5b6b29137",
+          "position": 15,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "47856ec2-015c-407f-a8f8-5bfc47be60dd",
+          "fieldMetadataUniversalIdentifier": "b84260f0-6fba-49b2-81f1-723385ca2a9a",
+          "position": 16,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "914cfc5c-b7f2-435e-af33-2d1a0975a5f2",
+      "name": "Lumber suppliers",
+      "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
+      "type": "TABLE",
+      "icon": "IconBuildingSkyscraper",
+      "position": 14,
+      "fields": [
+        {
+          "universalIdentifier": "dda77a42-3848-402a-9f6d-494f3fda011a",
+          "fieldMetadataUniversalIdentifier": "20202020-4d99-4e2e-a84c-4a27837b1ece",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "a5735e0b-10fc-4145-91fd-e70ccd2a3fe7",
+          "fieldMetadataUniversalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4fd86b13-dc46-48b1-9fc3-cd5e1f0bab75",
+          "fieldMetadataUniversalIdentifier": "cfeb743b-52a7-4cef-b621-2961f5bee8d7",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "b4b2ee80-99df-42a4-b9e4-f4083cb5dd64",
+          "fieldMetadataUniversalIdentifier": "a04ce7bc-40ea-444b-a1e4-923d9cffff8e",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "6a4996bb-ce8d-4989-a1be-935eff18bb5a",
+          "fieldMetadataUniversalIdentifier": "a1232948-6770-4ead-92fd-866acfb0eae2",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3bec16d7-2029-4833-b0be-c9d5f9d51ec1",
+          "fieldMetadataUniversalIdentifier": "613a3c41-3cfa-4855-977c-4f173da046e7",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "75be18d4-09bd-474e-9e0e-8f1a3f60ba0a",
+          "fieldMetadataUniversalIdentifier": "3a8ee602-c23a-4596-a10f-538460fd9bde",
+          "operand": "IS",
+          "value": [
+            "SUPPLIER",
+            "BOTH"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "a594ce19-e47a-4235-ab49-f1a3a86aba05",
+      "name": "Commission terms TBD",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "type": "TABLE",
+      "icon": "IconPercentage",
+      "position": 1,
+      "fields": [
+        {
+          "universalIdentifier": "4a212f4b-fac1-4300-a681-80b1d02e3076",
+          "fieldMetadataUniversalIdentifier": "77ded3e3-e2ba-4dd9-a008-bc32ee22b993",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "4ae25af8-5f5c-49c0-9f13-68885dfa92e6",
+          "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7b0d9767-0481-4b22-896f-68f4db612023",
+          "fieldMetadataUniversalIdentifier": "7eb57cd5-3027-4696-802f-f354371f0501",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "035bbe89-815d-4e89-9026-41175cbbe952",
+          "fieldMetadataUniversalIdentifier": "69be5088-471d-453f-87ff-f4ede5e0577d",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d7385028-7a3d-4028-a0ec-2b7cbfd1eeda",
+          "fieldMetadataUniversalIdentifier": "6d1507b1-3637-49de-830a-fd9e8516e444",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d09dab4c-3c5e-4aaa-83a7-c1bed5f6ec89",
+          "fieldMetadataUniversalIdentifier": "da793f21-470f-4dd3-9146-9af394c15774",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4feaa674-bef3-4454-8de3-92f4a6065f37",
+          "fieldMetadataUniversalIdentifier": "ff474494-1abe-4986-a637-0c8db74b24ed",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7669c97a-dbef-4be0-b516-b7447b0a854a",
+          "fieldMetadataUniversalIdentifier": "de0c148f-d6f6-4220-824a-f778056ca50a",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "884103f2-24cc-4f19-aa6a-ea6d9e2441b3",
+          "fieldMetadataUniversalIdentifier": "77f2253e-c739-4e3c-9c9d-313e246901c4",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "67767a91-e54b-4a18-ae1d-40aaed6306ac",
+          "fieldMetadataUniversalIdentifier": "7776d092-d54e-477b-bb0c-a8ea2f3e07df",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "dfc2f235-5911-4cf6-93b2-00f68bbf0dc7",
+          "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+          "operand": "IS",
+          "value": [
+            "TBD"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "adea96ff-41cf-423d-9285-c6774dcf789e",
+      "name": "Order line details",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "bc4b3e0c-e18e-4dc3-8da0-697d3b217ed1",
+          "fieldMetadataUniversalIdentifier": "91417c77-d35f-4149-9c3c-80f95c384169",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "f199d9ce-6af0-4694-b4db-2d4de6c16390",
+          "fieldMetadataUniversalIdentifier": "508d905f-6948-44b0-9643-c1b9c1eec079",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "aac9506a-e099-4c23-997e-a837ce19765d",
+          "fieldMetadataUniversalIdentifier": "29db496c-0f3d-490b-bc78-0fdaf7cce774",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "03bfe681-026b-4d39-ac76-f12f366aea9a",
+          "fieldMetadataUniversalIdentifier": "4e841ab9-6241-4183-b68c-0bae80baed56",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "c68763bf-aff3-4f0f-b3e0-5c885eb8fff3",
+          "fieldMetadataUniversalIdentifier": "e62aae2e-3933-4894-a14e-8ec49c4d1b7b",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "904be01a-6f04-4227-940a-61c21b0ede16",
+          "fieldMetadataUniversalIdentifier": "7794d53f-f457-408e-b5a9-f82938b3800b",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "594a0717-b705-40eb-b4f9-aa4f36dc51e9",
+          "fieldMetadataUniversalIdentifier": "8e90ffbd-a670-4587-b52e-ea53644e3078",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "937611b2-edd4-488c-8631-173e7f1ce889",
+          "fieldMetadataUniversalIdentifier": "960d05d4-d96e-4e46-81fb-66d6261478c2",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "eea64f86-85ae-4438-9751-c6fffdabf38a",
+          "fieldMetadataUniversalIdentifier": "270ae29f-fe34-45d1-8003-cad4fec5e279",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "27283657-8b6f-4c85-b03d-8bdda3632310",
+          "fieldMetadataUniversalIdentifier": "6e98b17a-d8f1-4b78-9699-8dcad2c0171e",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7aa77a13-47dc-468f-ad58-b1435be0c371",
+          "fieldMetadataUniversalIdentifier": "37b0312e-42bf-43fe-9cec-cf54252f9698",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "47af815c-b676-42c7-b62e-d09b0ecc5fda",
+          "fieldMetadataUniversalIdentifier": "16d31adc-4481-4ae9-95e6-7a579338e0e5",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "55976660-1a9c-4995-a128-7312843864b5",
+          "fieldMetadataUniversalIdentifier": "f6cac4ab-6379-49ba-8239-6af57514ef10",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "bdb644e6-1d09-49d5-9dae-6d608c13fbbe",
+      "name": "Delayed shipments",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "type": "TABLE",
+      "icon": "IconTruckDelivery",
+      "position": 1,
+      "fields": [
+        {
+          "universalIdentifier": "3c4d01a1-3b3d-42c4-8e93-3ab87dc53baf",
+          "fieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "97370d71-7572-4e95-8c17-a01ea0f111ff",
+          "fieldMetadataUniversalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d26bfcff-39bb-4785-bb00-7a89a7f08254",
+          "fieldMetadataUniversalIdentifier": "7c14ee70-e536-46b0-bc96-005fb6b3324c",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "0c760cbe-7c07-4cd1-822a-09b2b794f400",
+          "fieldMetadataUniversalIdentifier": "9cfbb84f-4649-406e-a47c-945572a461bf",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7a67402a-065b-4df6-9619-48102688c46e",
+          "fieldMetadataUniversalIdentifier": "9fefb5cb-6c3f-4806-aa4c-5919e7eaa556",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "5b22e10f-c939-4bb7-97f9-40261b4adcd0",
+          "fieldMetadataUniversalIdentifier": "69fa0e54-cdb6-4282-b58a-9f561ea628bc",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "33e21425-12a1-4b62-82b7-53154e7ad882",
+          "fieldMetadataUniversalIdentifier": "f7b1ff3a-3d39-4276-9e76-0cdfe7c4fb6c",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "91ce1f19-e869-45f0-977a-38b7a6265d6d",
+          "fieldMetadataUniversalIdentifier": "89a0d5cb-f698-4c76-9e20-0be4c685d51f",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "284f0409-c03c-442f-bccc-b5f6a5b274bf",
+          "fieldMetadataUniversalIdentifier": "4a9005eb-9c0f-4359-bc03-62bb6386909a",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        }
+      ],
+      "filters": [
+        {
+          "universalIdentifier": "494375b5-f10b-491f-b82c-f71ed5af686e",
+          "fieldMetadataUniversalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+          "operand": "IS",
+          "value": [
+            "DELAYED"
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "e221b868-a50d-479b-b57e-583fef315d61",
+      "name": "Site visits",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "type": "TABLE",
+      "icon": "IconMapPin",
+      "position": 0,
+      "fields": [
+        {
+          "universalIdentifier": "22e7f492-2470-42ef-935b-c75fe5c60a04",
+          "fieldMetadataUniversalIdentifier": "8ea32c22-889b-41fc-8e8b-f869df747eee",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "163a6cec-ec6f-4249-8bf3-afc79f7de462",
+          "fieldMetadataUniversalIdentifier": "171a7a7d-fe64-4603-afbf-d1ec4eede52d",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "64c40f73-20d5-44a2-b70d-f7b347596b14",
+          "fieldMetadataUniversalIdentifier": "8b04b9d2-3db9-49d2-bd69-b29064731423",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "66d07993-ed00-4e45-b657-85d19bc010ab",
+          "fieldMetadataUniversalIdentifier": "3235edc9-e8a9-4e94-8a22-ba1bcdd45683",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3dbca564-c5e8-4d66-8eab-a16b300cd659",
+          "fieldMetadataUniversalIdentifier": "c6d9582d-ff05-4ab9-a6e8-38424ab59464",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ae61e87f-fbda-4a6e-8e36-81658e458e4e",
+          "fieldMetadataUniversalIdentifier": "77e902b7-c0bd-43a2-b3be-de9c4c640e4c",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "4c266e1d-eb7a-453d-ac59-584bbe827f61",
+          "fieldMetadataUniversalIdentifier": "c9f78e61-11b2-4549-ba7b-a300c368cb69",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "267d9395-c133-4d12-a63f-64afb2d23931",
+          "fieldMetadataUniversalIdentifier": "0dcfdecf-4679-4388-9f7a-ae15f76d0b73",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "e33ddd37-6212-4bba-8e8d-508a954604ac",
+      "name": "Reorder plan details",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "f03a4950-8d38-40f9-a0f1-ed8c21f49590",
+          "fieldMetadataUniversalIdentifier": "1ced4ee3-24d6-4229-b744-d75a701a3e58",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "6a8f2e90-24a1-49b4-9008-b54b0dfa9d62",
+          "fieldMetadataUniversalIdentifier": "48fa6526-bd17-41d7-8792-d7005afa224a",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "75a87e42-3aaa-4ab2-a755-042d59057b5f",
+          "fieldMetadataUniversalIdentifier": "bffc8dd6-1388-400b-9b46-87b5e6ec5ece",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "9a02dbee-bf70-4649-8bf1-07942dc53673",
+          "fieldMetadataUniversalIdentifier": "a0cfff3d-5bbb-4162-be39-1541c82701ca",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "b98b46b4-63b4-438e-ae97-6021f4316693",
+          "fieldMetadataUniversalIdentifier": "50a3b218-d24e-492e-8cdd-2ab22470aa8e",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "000d1cb9-b108-4824-8a5a-f7268fcb3cf8",
+          "fieldMetadataUniversalIdentifier": "e4a5cb57-ec3f-4910-a67c-b38c337c1eca",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "3e2f6e36-8f64-41be-bac9-8e26411471ac",
+          "fieldMetadataUniversalIdentifier": "476f77e8-6127-4842-b54d-b286c3abb4cb",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "aa759413-0331-414c-9556-4f8787467f9d",
+          "fieldMetadataUniversalIdentifier": "f322fbcc-8852-4f09-9153-f737902cc509",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "9a87cf30-e91f-4e2d-8bfc-54f58cfa0614",
+          "fieldMetadataUniversalIdentifier": "24926c34-7cd3-4b2d-bc20-ab0ede874d9b",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7d6ca37d-1576-43fa-b4b9-f8acbe6c1db6",
+          "fieldMetadataUniversalIdentifier": "725c5cd3-aaba-4a60-b001-4ae6d526f142",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "41545c64-633d-47e5-8b8c-4c1bed80902a",
+          "fieldMetadataUniversalIdentifier": "672e6373-3fe9-4a32-baa7-4822aba9344a",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "813a63bf-269c-4e99-a4d1-8446f979bec1",
+          "fieldMetadataUniversalIdentifier": "b1ed0e06-e739-4642-b624-cf20d6a0fc23",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "d5469126-b205-4735-bad5-791e5016eb01",
+          "fieldMetadataUniversalIdentifier": "70cc9d5d-97f7-4c95-b68b-854c5b666f19",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "fad56390-7b85-4ceb-a31c-22c82150f28b",
+      "name": "Shipment lot details",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "type": "FIELDS_WIDGET",
+      "fields": [
+        {
+          "universalIdentifier": "ac2111ab-96ed-4e2d-a1c4-da42a6971555",
+          "fieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+          "position": 0,
+          "isVisible": true,
+          "size": 230
+        },
+        {
+          "universalIdentifier": "70ed383a-f008-4df5-b45b-9bac6bb1f3ac",
+          "fieldMetadataUniversalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+          "position": 1,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "6dd064e0-05cd-4d09-95dc-ab3d6dbad6f6",
+          "fieldMetadataUniversalIdentifier": "7c14ee70-e536-46b0-bc96-005fb6b3324c",
+          "position": 2,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "ee20a91c-cb5e-4161-a8c1-02e68b61e8ba",
+          "fieldMetadataUniversalIdentifier": "9fefb5cb-6c3f-4806-aa4c-5919e7eaa556",
+          "position": 3,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "0aba7792-7f80-48a7-b8e2-dd901d8a2e42",
+          "fieldMetadataUniversalIdentifier": "69fa0e54-cdb6-4282-b58a-9f561ea628bc",
+          "position": 4,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "e7352956-4a3b-481a-85e0-20d981b5238f",
+          "fieldMetadataUniversalIdentifier": "c5bee1e3-71c3-4a15-aaa3-e28da73b80d4",
+          "position": 5,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "61f24fdc-44a5-47ef-8944-30e7ae872ce5",
+          "fieldMetadataUniversalIdentifier": "f7b1ff3a-3d39-4276-9e76-0cdfe7c4fb6c",
+          "position": 6,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "8c990ad9-7097-4ca1-bb21-09810e59d5da",
+          "fieldMetadataUniversalIdentifier": "c403eed4-d2d3-4939-a53b-1104fbac3ea8",
+          "position": 7,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "c8e52c77-7e1a-4632-a9d2-7b6dcd6043fc",
+          "fieldMetadataUniversalIdentifier": "89a0d5cb-f698-4c76-9e20-0be4c685d51f",
+          "position": 8,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "1ee81705-d8e9-4ad6-ab72-f7cc39998b10",
+          "fieldMetadataUniversalIdentifier": "594a7ae2-8738-4b23-ae3c-d467eff4b3a5",
+          "position": 9,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "94542f74-3cd3-4653-981c-d2eebfcebb56",
+          "fieldMetadataUniversalIdentifier": "eb8ffd8f-7d6d-4c40-a8ea-d90dc3d7ad0e",
+          "position": 10,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "7e7588af-650c-4f8e-b429-edec2d999694",
+          "fieldMetadataUniversalIdentifier": "4a9005eb-9c0f-4359-bc03-62bb6386909a",
+          "position": 11,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "f1b7925e-1567-4b6a-b872-d3d23929d56f",
+          "fieldMetadataUniversalIdentifier": "2e0a5530-3aef-4911-a9e4-7ceaa41e71a9",
+          "position": 12,
+          "isVisible": true,
+          "size": 170
+        },
+        {
+          "universalIdentifier": "38b81d7c-d449-4c32-8a36-3e016efa5a66",
+          "fieldMetadataUniversalIdentifier": "9cfbb84f-4649-406e-a47c-945572a461bf",
+          "position": 13,
+          "isVisible": true,
+          "size": 170
+        }
+      ]
+    }
+  ],
+  "viewFields": [],
+  "navigationMenuItems": [
+    {
+      "universalIdentifier": "0088447e-cede-45a5-850c-1a85c8957709",
+      "name": "Lumber prospects",
+      "icon": "IconBuildingSkyscraper",
+      "position": 12,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "330e41b4-6793-4275-ba64-2ee8d2736369"
+    },
+    {
+      "universalIdentifier": "1de15661-6593-4eb8-a1fa-f6a8aa734138",
+      "name": "Orders",
+      "icon": "IconShoppingCart",
+      "color": "blue",
+      "position": 3,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0"
+    },
+    {
+      "universalIdentifier": "47b5ae8a-1056-41b0-b6ed-318447e53791",
+      "name": "Commissions",
+      "icon": "IconPercentage",
+      "color": "green",
+      "position": 7,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea"
+    },
+    {
+      "universalIdentifier": "556d1f3d-34ef-4c69-a365-4e32da889af2",
+      "name": "Reorder plans",
+      "icon": "IconRepeat",
+      "color": "blue",
+      "position": 6,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b"
+    },
+    {
+      "universalIdentifier": "6d72aad3-db26-464e-9d33-b3087d5cccfc",
+      "name": "Commission terms TBD",
+      "icon": "IconPercentage",
+      "position": 11,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "a594ce19-e47a-4235-ab49-f1a3a86aba05"
+    },
+    {
+      "universalIdentifier": "700774e4-4b33-4fe9-b965-ef76570fdd75",
+      "name": "Lumber customers",
+      "icon": "IconBuildingSkyscraper",
+      "position": 13,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "70c53220-572a-4ade-92a4-cb6d753c697f"
+    },
+    {
+      "universalIdentifier": "7024013f-0dc1-49fb-9734-f7fe86ffa981",
+      "name": "Lumber suppliers",
+      "icon": "IconBuildingSkyscraper",
+      "position": 14,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "914cfc5c-b7f2-435e-af33-2d1a0975a5f2"
+    },
+    {
+      "universalIdentifier": "997db24f-62c2-467e-9694-ce87def1884c",
+      "name": "Products",
+      "icon": "IconBox",
+      "color": "blue",
+      "position": 1,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686"
+    },
+    {
+      "universalIdentifier": "9b94cdda-f708-4483-a2bc-f8cb97996d82",
+      "name": "Order lines",
+      "icon": "IconListDetails",
+      "color": "blue",
+      "position": 4,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419"
+    },
+    {
+      "universalIdentifier": "acf8aa3c-1cc5-4959-a219-3c9141eb83f5",
+      "name": "Shipment lots",
+      "icon": "IconTruckDelivery",
+      "color": "blue",
+      "position": 5,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8"
+    },
+    {
+      "universalIdentifier": "c1e7a4bd-f13e-41e6-a287-ee93b710da09",
+      "name": "Delayed shipments",
+      "icon": "IconTruckDelivery",
+      "position": 9,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "bdb644e6-1d09-49d5-9dae-6d608c13fbbe"
+    },
+    {
+      "universalIdentifier": "c7f34054-af52-4eb6-84cf-ea1efb9043e4",
+      "name": "Site visits",
+      "icon": "IconMapPin",
+      "color": "blue",
+      "position": 2,
+      "type": "OBJECT",
+      "targetObjectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd"
+    },
+    {
+      "universalIdentifier": "ead489f7-fd62-4b17-8446-0320202bfa19",
+      "name": "Planned site visits",
+      "icon": "IconMapPin",
+      "position": 8,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "7e82143d-c61f-4823-98a5-10dfbdda165e"
+    },
+    {
+      "universalIdentifier": "ecbf120a-5e2c-47b0-b54a-b161757dfdf9",
+      "name": "Lumber Overview",
+      "icon": "IconChartBar",
+      "position": -1,
+      "type": "PAGE_LAYOUT",
+      "pageLayoutUniversalIdentifier": "c164fd62-1ea8-4bf1-a176-8ac1adb6658a"
+    },
+    {
+      "universalIdentifier": "eda1f57b-0d84-4d59-8df5-5a2f48cdb9ac",
+      "name": "Active reorder plans",
+      "icon": "IconRepeat",
+      "position": 10,
+      "type": "VIEW",
+      "viewUniversalIdentifier": "703b129b-9240-4aed-ad6d-3ac6b959afa9"
+    }
+  ],
+  "pageLayouts": [
+    {
+      "universalIdentifier": "17670d3d-64f6-440b-84ed-1e2f8a6652df",
+      "name": "Default Order Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "tabs": [
+        {
+          "universalIdentifier": "f4f29f3c-f238-4b7c-bee9-6113de5dd6de",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "7a43f42b-84f7-4b8f-b6b7-56014ad60173",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "27d4c265-4e0d-4ded-b122-6379e262ac32"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "22a20459-7f61-45a2-8c9a-e85008082fbd",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "5ddcac56-ae3b-4012-8e9e-0b04270a6508",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "219b9a37-328f-465e-b736-abf201b868f2",
+      "name": "Default Reorder plan Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "tabs": [
+        {
+          "universalIdentifier": "3b453d3e-b080-45c9-87f3-3e99cd66d928",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "23bdeca8-7757-40a8-8139-d4a3c653af3b",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "e33ddd37-6212-4bba-8e8d-508a954604ac"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "29092298-752a-474a-981a-1fe5c95fb59d",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "d4c563c5-0da9-4a36-8ccb-49e69a92f844",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "4a3ed2fe-5b9d-4e30-b385-45056840b81a",
+      "name": "Default Order line Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "tabs": [
+        {
+          "universalIdentifier": "3b3d854e-6fb3-454a-8f65-94c2efa6c99f",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "8610f33d-9f45-47d9-976c-88126d10ec4d",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "adea96ff-41cf-423d-9285-c6774dcf789e"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "0d2081bc-dd86-4993-a88d-09a2d800054f",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "3c59d92a-7789-44b6-a3b5-32b0ab0056ef",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "5340772e-a838-4c92-8b6b-a3295d6d96dd",
+      "name": "Default Product Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "tabs": [
+        {
+          "universalIdentifier": "35fa1cbd-3bba-41fd-9494-f195ba8f581d",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "57a737f0-7024-4a3d-ada5-73bda346bc44",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "8db1c164-f773-434b-87e1-2cd7d939cf57"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "0680efab-86be-41f3-9abb-f87694b0edcb",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "5800e955-89be-4d6b-b9ec-5654ef9bfd26",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "716a8ad0-d55c-4145-8865-053af1101fb9",
+      "name": "Default Commission Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "tabs": [
+        {
+          "universalIdentifier": "e4433073-b515-4f5c-bfe3-fb3f039bf01c",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "884d7faa-82e8-433e-83dc-559eee929dc5",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "191ebca1-fb4c-49b6-a51f-c07c0d442fb2"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "668fb759-3578-4bb6-aae8-91615f6f1c12",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "c53669aa-e926-47f2-8fa1-e3d954951fcc",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "bf3f4454-d52d-49fe-91e7-127563a9ed70",
+      "name": "Default Site visit Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+      "tabs": [
+        {
+          "universalIdentifier": "59d5afa7-078c-4312-a6a5-09780e201fce",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "36f7bbef-3f71-49bd-89f5-209de0df011b",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "645c1514-b5fe-4faf-b363-391385a61e47"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "53971501-58a6-4e74-a749-0229ad31985c",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "cff39563-5013-4287-9959-8019e87f1143",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "c164fd62-1ea8-4bf1-a176-8ac1adb6658a",
+      "name": "Lumber Overview",
+      "type": "STANDALONE_PAGE",
+      "tabs": [
+        {
+          "universalIdentifier": "b6f436f3-3b94-43bb-afb6-a4d17b5442a4",
+          "title": "Overview",
+          "position": 0,
+          "icon": "IconChartBar",
+          "layoutMode": "GRID",
+          "widgets": [
+            {
+              "universalIdentifier": "9e88a38e-3ac0-46e0-9091-06a67959c73b",
+              "title": "Confirmed order value",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 0,
+                "column": 0,
+                "rowSpan": 2,
+                "columnSpan": 4
+              },
+              "configuration": {
+                "configurationType": "AGGREGATE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "af8295df-ecb1-40c5-a243-018f767f8d91",
+                "aggregateOperation": "SUM",
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1,
+                "filter": {
+                  "recordFilters": [
+                    {
+                      "fieldMetadataUniversalIdentifier": "3ea3eac8-f0c2-42d0-87c4-8cbebf596ed0",
+                      "operand": "IS",
+                      "value": "[\"CONFIRMED\"]"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "universalIdentifier": "d007080a-e3b2-4f6f-847b-d4ae1497d32e",
+              "title": "Planned site visits",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 0,
+                "column": 4,
+                "rowSpan": 2,
+                "columnSpan": 4
+              },
+              "configuration": {
+                "configurationType": "AGGREGATE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "8ea32c22-889b-41fc-8e8b-f869df747eee",
+                "aggregateOperation": "COUNT",
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1,
+                "filter": {
+                  "recordFilters": [
+                    {
+                      "fieldMetadataUniversalIdentifier": "171a7a7d-fe64-4603-afbf-d1ec4eede52d",
+                      "operand": "IS",
+                      "value": "[\"PLANNED\"]"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "universalIdentifier": "1027bd0a-71a4-4baa-86b1-b5cd95d93226",
+              "title": "Undelivered shipment lots",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 0,
+                "column": 8,
+                "rowSpan": 2,
+                "columnSpan": 4
+              },
+              "configuration": {
+                "configurationType": "AGGREGATE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+                "aggregateOperation": "COUNT",
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1,
+                "filter": {
+                  "recordFilters": [
+                    {
+                      "fieldMetadataUniversalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+                      "operand": "IS",
+                      "value": "[\"PLANNED\",\"IN_TRANSIT\",\"DELAYED\"]"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "universalIdentifier": "40b4dc69-2460-40f5-a201-3e8eda8d259c",
+              "title": "Expected commission · agreed terms",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 2,
+                "column": 0,
+                "rowSpan": 2,
+                "columnSpan": 4
+              },
+              "configuration": {
+                "configurationType": "AGGREGATE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "da793f21-470f-4dd3-9146-9af394c15774",
+                "aggregateOperation": "SUM",
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1,
+                "filter": {
+                  "recordFilters": [
+                    {
+                      "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+                      "operand": "IS",
+                      "value": "[\"CONFIRMED\"]"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "universalIdentifier": "367395d1-000b-4d04-a50f-0b197f9691bc",
+              "title": "Commission received · agreed terms",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 2,
+                "column": 4,
+                "rowSpan": 2,
+                "columnSpan": 4
+              },
+              "configuration": {
+                "configurationType": "AGGREGATE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "ff474494-1abe-4986-a637-0c8db74b24ed",
+                "aggregateOperation": "SUM",
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1,
+                "filter": {
+                  "recordFilters": [
+                    {
+                      "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+                      "operand": "IS",
+                      "value": "[\"CONFIRMED\"]"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "universalIdentifier": "5d11ec1b-ef7f-4688-ba19-7f27c7020813",
+              "title": "Your expected allocation · agreed split",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 2,
+                "column": 8,
+                "rowSpan": 2,
+                "columnSpan": 4
+              },
+              "configuration": {
+                "configurationType": "AGGREGATE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "77f2253e-c739-4e3c-9c9d-313e246901c4",
+                "aggregateOperation": "SUM",
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1,
+                "filter": {
+                  "recordFilters": [
+                    {
+                      "fieldMetadataUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+                      "operand": "IS",
+                      "value": "[\"CONFIRMED\"]"
+                    },
+                    {
+                      "fieldMetadataUniversalIdentifier": "de0c148f-d6f6-4220-824a-f778056ca50a",
+                      "operand": "IS",
+                      "value": "true"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "universalIdentifier": "f4979db7-3150-4168-9891-2aff38502a38",
+              "title": "Sales orders by stage",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 4,
+                "column": 0,
+                "rowSpan": 5,
+                "columnSpan": 6
+              },
+              "configuration": {
+                "configurationType": "PIE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "66ab3c90-7dbc-40c9-b639-de336dc5d7ff",
+                "aggregateOperation": "COUNT",
+                "groupByFieldMetadataUniversalIdentifier": "3ea3eac8-f0c2-42d0-87c4-8cbebf596ed0",
+                "displayLegend": true,
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1
+              }
+            },
+            {
+              "universalIdentifier": "f90795a3-53f5-4658-9d2b-9134ea72eed6",
+              "title": "Shipment lots by status",
+              "type": "GRAPH",
+              "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+              "position": {
+                "layoutMode": "GRID",
+                "row": 4,
+                "column": 6,
+                "rowSpan": 5,
+                "columnSpan": 6
+              },
+              "configuration": {
+                "configurationType": "PIE_CHART",
+                "aggregateFieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
+                "aggregateOperation": "COUNT",
+                "groupByFieldMetadataUniversalIdentifier": "b6ba0380-0e33-456a-b56e-039b9af78903",
+                "displayLegend": true,
+                "displayDataLabel": true,
+                "timezone": "America/New_York",
+                "firstDayOfTheWeek": 1
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "universalIdentifier": "ee9ce168-9cee-4d69-bb08-31e74bb690a5",
+      "name": "Default Shipment lot Layout",
+      "type": "RECORD_PAGE",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "tabs": [
+        {
+          "universalIdentifier": "1233637f-40ba-44d3-922a-44067f7c12da",
+          "title": "Home",
+          "position": 10,
+          "icon": "IconHome",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "bbf7dd0f-ef5a-4730-935e-b1d7c6d88a02",
+              "title": "Fields",
+              "type": "FIELDS",
+              "configuration": {
+                "configurationType": "FIELDS",
+                "viewUniversalIdentifier": "fad56390-7b85-4ceb-a31c-22c82150f28b"
+              }
+            }
+          ]
+        },
+        {
+          "universalIdentifier": "f9fd4b88-0ebc-482c-b1c9-25214035f827",
+          "title": "Timeline",
+          "position": 20,
+          "icon": "IconTimelineEvent",
+          "layoutMode": "VERTICAL_LIST",
+          "widgets": [
+            {
+              "universalIdentifier": "d2b9e72e-6619-4302-a192-762701316029",
+              "title": "Timeline",
+              "type": "TIMELINE",
+              "configuration": {
+                "configurationType": "TIMELINE"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pageLayoutTabs": [],
+  "pageLayoutWidgets": [],
+  "commandMenuItems": [],
+  "timelineActivityTypes": [],
+  "settingsMenuItems": [],
+  "validationRules": [
+    {
+      "universalIdentifier": "0b0eae02-8223-4e12-8206-741576048bca",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "name": "positive-shipment-quantity",
+      "message": "Shipment lot quantity must be positive when entered.",
+      "errorFieldUniversalIdentifier": "9fefb5cb-6c3f-4806-aa4c-5919e7eaa556",
+      "expression": "not isDefined(quantity) or quantity > 0"
+    },
+    {
+      "universalIdentifier": "0b71bdd8-45c7-48a0-b780-ca8e5ced6e94",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "name": "confirmed-commission-split",
+      "message": "A confirmed split needs shares totaling 100% and written terms identifying the partner pool.",
+      "errorFieldUniversalIdentifier": "de0c148f-d6f6-4220-824a-f778056ca50a",
+      "expression": "splitConfirmed != true or (isDefined(yourSharePercent) and isDefined(partnerPoolSharePercent) and yourSharePercent + partnerPoolSharePercent == 100 and isNonEmptyString(splitTerms))"
+    },
+    {
+      "universalIdentifier": "0fad7014-13a5-4dd4-8e3c-c61463103c7e",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "name": "nonnegative-commission-amounts",
+      "message": "Commission receipts, eligible amount and payouts cannot be negative.",
+      "errorFieldUniversalIdentifier": "ff474494-1abe-4986-a637-0c8db74b24ed",
+      "expression": "(not isDefined(eligibleAmount.amountMicros) or eligibleAmount.amountMicros >= 0) and (not isDefined(receivedCommission.amountMicros) or receivedCommission.amountMicros >= 0) and (not isDefined(yourPaid.amountMicros) or yourPaid.amountMicros >= 0) and (not isDefined(partnerPoolPaid.amountMicros) or partnerPoolPaid.amountMicros >= 0)"
+    },
+    {
+      "universalIdentifier": "36b01681-6f69-4c6c-95aa-0e05ec3806b9",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "name": "order-line-units",
+      "message": "Choose an explicit unit for each entered quantity.",
+      "errorFieldUniversalIdentifier": "e62aae2e-3933-4894-a14e-8ec49c4d1b7b",
+      "expression": "(not isDefined(quantity) or isDefined(quantityUnit)) and (not isDefined(pricingQuantity) or isDefined(pricingUnit))"
+    },
+    {
+      "universalIdentifier": "4a7b368a-e298-4c13-93c6-8eead093e396",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "name": "product-usd-amounts",
+      "message": "Use USD for all amounts in this first version. Currency conversion is not supported.",
+      "errorFieldUniversalIdentifier": "064bcb91-4f62-433c-89f1-c2de4ae23c4a",
+      "expression": "(not isDefined(referencePrice.amountMicros) or referencePrice.currencyCode == \"USD\")"
+    },
+    {
+      "universalIdentifier": "57ac7ee6-6073-464d-8020-025048bd170f",
+      "objectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b",
+      "name": "positive-reorder-period",
+      "message": "Repeat months and quantity must be positive; planning lead time cannot be negative.",
+      "errorFieldUniversalIdentifier": "bffc8dd6-1388-400b-9b46-87b5e6ec5ece",
+      "expression": "(not isDefined(repeatMonths) or repeatMonths > 0) and (not isDefined(expectedQuantity) or expectedQuantity > 0) and (not isDefined(leadTimeDays) or leadTimeDays >= 0)"
+    },
+    {
+      "universalIdentifier": "5a0dda84-a711-4025-8af6-7edccfb7fe8b",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "name": "commission-usd-amounts",
+      "message": "Use USD for all amounts in this first version. Currency conversion is not supported.",
+      "errorFieldUniversalIdentifier": "6d1507b1-3637-49de-830a-fd9e8516e444",
+      "expression": "(not isDefined(eligibleAmount.amountMicros) or eligibleAmount.currencyCode == \"USD\") and (not isDefined(expectedCommission.amountMicros) or expectedCommission.currencyCode == \"USD\") and (not isDefined(receivedCommission.amountMicros) or receivedCommission.currencyCode == \"USD\") and (not isDefined(yourExpectedShare.amountMicros) or yourExpectedShare.currencyCode == \"USD\") and (not isDefined(partnerPoolExpectedShare.amountMicros) or partnerPoolExpectedShare.currencyCode == \"USD\") and (not isDefined(yourPaid.amountMicros) or yourPaid.currencyCode == \"USD\") and (not isDefined(partnerPoolPaid.amountMicros) or partnerPoolPaid.currencyCode == \"USD\")"
+    },
+    {
+      "universalIdentifier": "69ad1dbc-c663-49ae-8609-d8a0897bb7ae",
+      "objectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686",
+      "name": "product-lead-time",
+      "message": "Lead time must be zero or a positive number of days.",
+      "errorFieldUniversalIdentifier": "02aff32c-86bd-4ced-8461-00717f1ac648",
+      "expression": "not isDefined(leadTimeDays) or leadTimeDays >= 0"
+    },
+    {
+      "universalIdentifier": "71f5c2b6-4349-40af-ae33-b9474bbe5b0a",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "name": "commission-percentage-ranges",
+      "message": "Commission and split percentages must be between 0 and 100.",
+      "errorFieldUniversalIdentifier": "69be5088-471d-453f-87ff-f4ede5e0577d",
+      "expression": "(not isDefined(commissionRate) or (commissionRate >= 0 and commissionRate <= 100)) and (not isDefined(yourSharePercent) or (yourSharePercent >= 0 and yourSharePercent <= 100)) and (not isDefined(partnerPoolSharePercent) or (partnerPoolSharePercent >= 0 and partnerPoolSharePercent <= 100))"
+    },
+    {
+      "universalIdentifier": "9c35ed53-46ed-4c15-a83a-46cf81bf8a70",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "name": "order-line-usd-amounts",
+      "message": "Use USD for all amounts in this first version. Currency conversion is not supported.",
+      "errorFieldUniversalIdentifier": "960d05d4-d96e-4e46-81fb-66d6261478c2",
+      "expression": "(not isDefined(unitPrice.amountMicros) or unitPrice.currencyCode == \"USD\") and (not isDefined(lineValue.amountMicros) or lineValue.currencyCode == \"USD\")"
+    },
+    {
+      "universalIdentifier": "a0bfdc69-e9be-4313-8beb-dc9652d92b25",
+      "objectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419",
+      "name": "positive-order-quantities",
+      "message": "Ordered and pricing quantities must be positive when entered.",
+      "errorFieldUniversalIdentifier": "4e841ab9-6241-4183-b68c-0bae80baed56",
+      "expression": "(not isDefined(quantity) or quantity > 0) and (not isDefined(pricingQuantity) or pricingQuantity > 0)"
+    },
+    {
+      "universalIdentifier": "a3d4ff02-be55-4412-9fd3-1eb26108696e",
+      "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
+      "name": "order-usd-amounts",
+      "message": "Use USD for all amounts in this first version. Currency conversion is not supported.",
+      "errorFieldUniversalIdentifier": "af8295df-ecb1-40c5-a243-018f767f8d91",
+      "expression": "(not isDefined(orderValue.amountMicros) or orderValue.currencyCode == \"USD\")"
+    },
+    {
+      "universalIdentifier": "acad71ce-689c-43e8-ab5f-ab81ff1ee7a4",
+      "objectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea",
+      "name": "confirmed-commission-terms",
+      "message": "Confirm the commission rate, eligible USD amount and basis before confirming terms.",
+      "errorFieldUniversalIdentifier": "c01f56df-9a3c-4450-9529-932713feb024",
+      "expression": "status != \"CONFIRMED\" or (isDefined(commissionRate) and isDefined(eligibleAmount.amountMicros) and eligibleAmount.amountMicros >= 0 and eligibleAmount.currencyCode == \"USD\" and isNonEmptyString(eligibleBasis))"
+    },
+    {
+      "universalIdentifier": "b2b40bae-a662-4c5f-ab35-3ae45dc9b125",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "name": "delivered-shipment-date",
+      "message": "A delivered lot needs its actual delivery date and positive quantity.",
+      "errorFieldUniversalIdentifier": "89a0d5cb-f698-4c76-9e20-0be4c685d51f",
+      "expression": "status != \"DELIVERED\" or (isDefined(deliveredAt) and isDefined(quantity) and quantity > 0)"
+    },
+    {
+      "universalIdentifier": "b769647a-9f29-4179-96c1-6b76d252f738",
+      "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
+      "name": "shipment-unit",
+      "message": "Choose the unit for this shipment lot quantity.",
+      "errorFieldUniversalIdentifier": "69fa0e54-cdb6-4282-b58a-9f561ea628bc",
+      "expression": "not isDefined(quantity) or isDefined(quantityUnit)"
+    }
+  ],
+  "relatedRecordPaths": [],
+  "translations": {}
+}

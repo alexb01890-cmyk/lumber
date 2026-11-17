@@ -8,6 +8,8 @@
 !deploy/vercel/runtime/**
 !deploy/vercel/certificates
 !deploy/vercel/certificates/supabase-root-ca-bundle.crt
+!deploy/vercel/lumber-application
+!deploy/vercel/lumber-application/**
 
 **/node_modules/**
 **/coverage/**

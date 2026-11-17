@@ -1,5 +1,7 @@
 'use strict';
 
+const { getRuntimeRelease, RUNTIME_VERSION } = require('./runtime-release.cjs');
+
 const validateEnvironment = (input, role) => {
   const fail = (message) => {
     const error = new Error(message);
@@ -77,13 +79,6 @@ const validateEnvironment = (input, role) => {
     }
   }
   if (role === 'worker') url('SERVER_INTERNAL_URL', ['http:', 'https:']);
-  const deploymentId =
-    input.VERCEL_DEPLOYMENT_ID || input.VERCEL_GIT_COMMIT_SHA;
-  if (typeof deploymentId !== 'string' || !deploymentId.trim()) {
-    fail(
-      'Expose VERCEL_DEPLOYMENT_ID or VERCEL_GIT_COMMIT_SHA to both runtimes.',
-    );
-  }
   const port = input.PORT === undefined ? 3000 : Number(input.PORT);
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     fail('PORT must be an integer from 1 to 65535.');
@@ -101,14 +96,16 @@ const validateEnvironment = (input, role) => {
     TMP: '/tmp',
     TEMP: '/tmp',
   };
-  if (role === 'web')
-    environment.SERVER_INTERNAL_URL = `http://127.0.0.1:${port}`;
+  if (role === 'web') {
+    environment.NODE_PORT = String(port === 3001 ? 3002 : 3001);
+    environment.SERVER_INTERNAL_URL = `http://127.0.0.1:${environment.NODE_PORT}`;
+  }
   return {
     environment,
     scope: {
       serverUrl: publicUrl.origin,
-      runtimeVersion: '2.58.0',
-      deploymentId: deploymentId.trim(),
+      runtimeVersion: RUNTIME_VERSION,
+      deploymentId: getRuntimeRelease(),
     },
   };
 };
