@@ -64,6 +64,53 @@ test('existing schema skips initialization while still checking upgrades and cro
   ]);
 });
 
+test('managed UUID compatibility runs under the lock without replacing existing functions', async () => {
+  const stub = databaseStub({ initialized: true });
+  await bootstrapDatabase(stub.client, scope, { runCommand: async () => {} });
+  const compatibilityIndex = stub.queries.findIndex(({ sql }) =>
+    sql.startsWith('DO $compatibility$'),
+  );
+  assert.ok(
+    compatibilityIndex >
+      stub.queries.findIndex(({ sql }) => sql.includes('pg_try_advisory_lock')),
+  );
+  assert.match(
+    stub.queries[compatibilityIndex].sql,
+    /IF to_regprocedure\('public.uuid_generate_v4\(\)'\) IS NULL/,
+  );
+  assert.equal(
+    stub.queries[compatibilityIndex].sql.includes('OR REPLACE'),
+    false,
+  );
+  const verificationIndex = stub.queries.findIndex(({ sql }) =>
+    sql.startsWith('SELECT public.uuid_generate_v4()'),
+  );
+  assert.ok(
+    verificationIndex <
+      stub.queries.findIndex(({ sql }) => sql.startsWith('INSERT INTO')),
+  );
+  assert.deepEqual(stub.queries[verificationIndex].values, ['café']);
+});
+
+test('database compatibility failure blocks readiness and releases the bootstrap lock', async () => {
+  const stub = databaseStub({
+    initialized: true,
+    failOnQuery: (sql) => sql.startsWith('DO $compatibility$'),
+  });
+  await assert.rejects(
+    bootstrapDatabase(stub.client, scope, {
+      runCommand: async () => assert.fail('must not migrate'),
+    }),
+    /database-test-failure/,
+  );
+  assert.equal(
+    stub.queries.some(({ sql }) => sql.startsWith('INSERT INTO')),
+    false,
+  );
+  assert.ok(stub.queries.at(-1).sql.includes('pg_advisory_unlock'));
+  assert.equal(stub.ends(), 1);
+});
+
 for (const partial of [
   { workspaceTableExists: false },
   { workspaceTableExists: true, hasWorkspaces: false },

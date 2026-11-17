@@ -24,6 +24,15 @@ const databaseStub = ({
     query: async (sql, values) => {
       queries.push({ sql, values });
       if (failOnQuery?.(sql)) throw new Error('database-test-failure');
+      if (sql.startsWith('SELECT public.uuid_generate_v4()'))
+        return {
+          rows: [
+            {
+              uuid: 'a1d07cb9-5970-42f0-90f6-b872f06582ca',
+              unaccented: 'cafe',
+            },
+          ],
+        };
       if (sql.includes('pg_try_advisory_lock'))
         return {
           rows: [

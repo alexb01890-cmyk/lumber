@@ -34,6 +34,16 @@ const bootstrapDatabase = async (
         throw new Error('Timed out waiting for the database bootstrap lock.');
       await sleep(1000, undefined, { signal });
     }
+    // Managed databases may install uuid-ossp outside Twenty's public schema.
+    await client.query(`DO $compatibility$
+      BEGIN
+        IF to_regprocedure('public.uuid_generate_v4()') IS NULL THEN
+          CREATE FUNCTION public.uuid_generate_v4() RETURNS uuid
+            LANGUAGE sql VOLATILE PARALLEL SAFE
+            AS $uuid_wrapper$ SELECT pg_catalog.gen_random_uuid(); $uuid_wrapper$;
+        END IF;
+      END;
+    $compatibility$;`);
     await client.query('CREATE SCHEMA IF NOT EXISTS vercel_runtime');
     await client.query(`CREATE TABLE IF NOT EXISTS vercel_runtime.bootstrap (
       server_url text NOT NULL,
@@ -89,6 +99,23 @@ const bootstrapDatabase = async (
       signal?.throwIfAborted();
       await runCommand('node', args);
     }
+    const compatibility = await client.query(
+      'SELECT public.uuid_generate_v4()::text AS uuid, public.unaccent_immutable($1) AS unaccented',
+      ['café'],
+    );
+    if (
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(
+        compatibility.rows[0]?.uuid,
+      ) ||
+      compatibility.rows[0]?.unaccented !== 'cafe'
+    ) {
+      const error = new Error(
+        'PostgreSQL UUID/search compatibility checks failed.',
+      );
+      error.code = 'VERCEL_CONFIGURATION';
+      throw error;
+    }
+    console.info('Twenty worker: UUID and search compatibility checks passed.');
     signal?.throwIfAborted();
     await client.query(
       'INSERT INTO vercel_runtime.bootstrap (server_url, runtime_version, deployment_id) VALUES ($1, $2, $3) ON CONFLICT (server_url, runtime_version, deployment_id) DO UPDATE SET ready_at = now()',
@@ -101,7 +128,10 @@ const bootstrapDatabase = async (
     let cleanupFailure;
     try {
       if (locked)
-        await client.query('SELECT pg_advisory_unlock($1, $2)', BOOTSTRAP_LOCK_KEY);
+        await client.query(
+          'SELECT pg_advisory_unlock($1, $2)',
+          BOOTSTRAP_LOCK_KEY,
+        );
     } catch (error) {
       cleanupFailure = error;
     } finally {
