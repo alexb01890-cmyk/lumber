@@ -58,7 +58,13 @@ const fixture = () => {
         /lumber_installation/i.test(normalized)
       )
         return {
-          rows: state.markerHash === values?.[2] ? [{ installed: true }] : [],
+          rows: (
+            values?.length === 2
+              ? state.markerHash != null
+              : state.markerHash === values?.[2]
+          )
+            ? [{ installed: true }]
+            : [],
         };
       return { rows: [] };
     },
@@ -133,6 +139,7 @@ test('a successful verified child result records only its exact installation ide
   const [input, options] = stub.state.installerCalls[0];
   assert.equal(input.workspaceId, WORKSPACE_ID);
   assert.equal(input.contentHash, CONTENT_HASH);
+  assert.equal(input.preserveWorkspaceSecurity, false);
   assert.equal(options.environment, stub.environment);
   assert.equal(stub.insertQueries().length, 1);
   assert.deepEqual(stub.insertQueries()[0].values.slice(0, 3), [
@@ -141,6 +148,17 @@ test('a successful verified child result records only its exact installation ide
     CONTENT_HASH,
   ]);
   assert.equal(stub.state.endCount, 1);
+});
+
+test('an update preserves owner security settings after a verified earlier installation', async () => {
+  const stub = fixture();
+  stub.state.markerHash = 'b'.repeat(64);
+  const result = await watchLumberInstallation(
+    stub.environment,
+    stub.dependencies,
+  );
+  assert.equal(result.status, 'installed');
+  assert.equal(stub.state.installerCalls[0][0].preserveWorkspaceSecurity, true);
 });
 
 test('an earlier bundle hash cannot skip installation of the current bundle', async () => {

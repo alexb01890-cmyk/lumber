@@ -21,13 +21,13 @@ twenty auth login --url https://your-twenty-instance.example --name dev
 twenty app apply --create --remote dev
 ```
 
-After the apply succeeds, open the workspace and select **Lumber Overview**. The app adds its objects and views to the navigation. Add real contacts and suppliers; it does not seed fabricated customers, orders, products or earnings.
+After the apply succeeds, open the workspace and select **Overview**. The app adds its objects and views to the navigation. Add real contacts and suppliers; it does not seed fabricated customers, orders, products or earnings. The Vercel installer also consolidates the base navigation as described in [README.md](./README.md#daily-workspace); for a manual installation set the display labels for Companies and People to Customers & suppliers and Contacts in Settings → Data model, then use Twenty's navigation editor to move optional base tools into Workspace tools.
 
-For later changes, inspect and apply a bounded update:
+For later changes, inspect and apply a bounded update. This release retires seven redundant navigation shortcuts; their saved views, objects and records remain:
 
 ```bash
-twenty app plan --remote dev
-twenty app apply --remote dev
+twenty app plan --prune --remote dev
+twenty app apply --prune --remote dev
 ```
 
 For a production workspace, review the plan and get the workspace owner's approval before applying changes.

@@ -5,7 +5,7 @@ export default defineNavigationMenuItem({
   name: 'Commissions',
   icon: 'IconPercentage',
   color: 'green',
-  position: 7,
+  position: 8,
   type: 'OBJECT',
   targetObjectUniversalIdentifier: 'a24350d6-b004-4c0e-bcf7-b30b5c6d3cea',
 });

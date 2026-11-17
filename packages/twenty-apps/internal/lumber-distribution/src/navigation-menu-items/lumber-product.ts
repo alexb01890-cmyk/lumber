@@ -5,7 +5,7 @@ export default defineNavigationMenuItem({
   name: 'Products',
   icon: 'IconBox',
   color: 'blue',
-  position: 1,
+  position: 3,
   type: 'OBJECT',
   targetObjectUniversalIdentifier: 'dafd6634-2352-4ec8-b3b1-c4b8ed90a686',
 });

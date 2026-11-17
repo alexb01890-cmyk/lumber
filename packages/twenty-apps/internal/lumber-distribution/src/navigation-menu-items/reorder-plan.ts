@@ -5,7 +5,7 @@ export default defineNavigationMenuItem({
   name: 'Reorder plans',
   icon: 'IconRepeat',
   color: 'blue',
-  position: 6,
+  position: 7,
   type: 'OBJECT',
   targetObjectUniversalIdentifier: '32d05b14-1d3b-49b9-85d5-14f3051d894b',
 });

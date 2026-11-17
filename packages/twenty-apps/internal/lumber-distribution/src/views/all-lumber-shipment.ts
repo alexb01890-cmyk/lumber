@@ -2,7 +2,7 @@ import { defineView } from 'twenty-sdk/define';
 
 export default defineView({
   universalIdentifier: '8d1e977a-ac55-4050-94f6-6bc86d85576f',
-  name: 'Shipment lots',
+  name: 'Shipments',
   objectUniversalIdentifier: '0826c666-a73a-4052-a44a-0853dac469c8',
   type: 'TABLE',
   icon: 'IconTruckDelivery',

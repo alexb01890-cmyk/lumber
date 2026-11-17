@@ -27,6 +27,7 @@ const INSTALLATION_PHASES = new Set([
   'artifact upload',
   'manifest application',
   'installation verification',
+  'navigation setup',
   'operator shutdown',
   'cancellation',
   'installer process',

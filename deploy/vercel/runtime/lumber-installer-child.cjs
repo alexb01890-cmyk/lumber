@@ -18,7 +18,9 @@ const runInstallerChild = async (
       !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
         message.workspaceId,
       ) ||
-      !/^[a-f0-9]{64}$/.test(message.contentHash)
+      !/^[a-f0-9]{64}$/.test(message.contentHash) ||
+      (message.preserveWorkspaceSecurity !== undefined &&
+        typeof message.preserveWorkspaceSecurity !== 'boolean')
     )
       throw new Error();
     const result = await install(
@@ -26,6 +28,9 @@ const runInstallerChild = async (
         bundleDirectory: message.bundleDirectory,
         workspaceId: message.workspaceId,
         expectedContentHash: message.contentHash,
+        ...(message.preserveWorkspaceSecurity !== undefined && {
+          preserveWorkspaceSecurity: message.preserveWorkspaceSecurity,
+        }),
       },
       { signal },
     );

@@ -75,12 +75,18 @@ const watchLumberInstallation = async (
         key,
       );
       if (existing.rows.length > 0) return { status: 'already-installed' };
+      const previous = await client.query(
+        `SELECT application_id FROM vercel_runtime.lumber_installation
+        WHERE workspace_id = $1 AND application_universal_identifier = $2 LIMIT 1`,
+        key.slice(0, 2),
+      );
       if (signal?.aborted) return { status: 'aborted' };
       phase = 'installer process';
       const expected = {
         bundleDirectory,
         workspaceId: workspace.id,
         contentHash: bundle.contentHash,
+        preserveWorkspaceSecurity: previous.rows.length > 0,
       };
       const result = await runInstaller(expected, { environment, signal });
       if (signal?.aborted) return { status: 'aborted' };

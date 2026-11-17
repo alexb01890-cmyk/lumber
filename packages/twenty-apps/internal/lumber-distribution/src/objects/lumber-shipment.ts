@@ -6,7 +6,7 @@ export default defineObject({
   nameSingular: 'lumberShipment',
   namePlural: 'lumberShipments',
   labelSingular: 'Shipment lot',
-  labelPlural: 'Shipment lots',
+  labelPlural: 'Shipments',
   icon: 'IconTruckDelivery',
   labelIdentifierFieldMetadataUniversalIdentifier:
     LUMBER_OBJECTS.shipment.fields.name,
