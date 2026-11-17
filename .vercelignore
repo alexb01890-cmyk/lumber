@@ -1,8 +1,11 @@
 *
 !vercel.json
-!deploy/
-!deploy/vercel/
-!deploy/vercel/**
+!deploy
+!deploy/vercel
+!deploy/vercel/Dockerfile.web
+!deploy/vercel/Dockerfile.worker
+!deploy/vercel/runtime
+!deploy/vercel/runtime/**
 
 **/node_modules/**
 **/coverage/**
