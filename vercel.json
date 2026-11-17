@@ -4,6 +4,12 @@
     "deploymentEnabled": { "codex/lumber-distribution-crm": false }
   },
   "services": {
+    "frontend": {
+      "root": "deploy/vercel/frontend",
+      "installCommand": "true",
+      "buildCommand": "node export-front.cjs",
+      "outputDirectory": "public"
+    },
     "crm": {
       "root": ".",
       "runtime": "container",
@@ -14,6 +20,26 @@
     }
   },
   "rewrites": [
+    {
+      "source": "/assets/(.*)",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/images/(.*)",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/emojibase/(.*)",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/manifest.json",
+      "destination": { "service": "frontend" }
+    },
+    {
+      "source": "/mockServiceWorker.js",
+      "destination": { "service": "frontend" }
+    },
     {
       "source": "/(.*)",
       "destination": { "service": "crm" }

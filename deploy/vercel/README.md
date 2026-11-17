@@ -1,6 +1,6 @@
 # Deploy the lumber CRM on Vercel
 
-This deployment preserves Twenty CRM and the Lumber Distribution app. The root `vercel.json` runs the official, pinned Twenty 2.58.0 image as one HTTP service (frontend and API) and one background worker daemon. It does not build Twenty's large development monorepo during deployment.
+This deployment preserves Twenty CRM and the Lumber Distribution app. The root `vercel.json` runs the official, pinned Twenty 2.58.0 image as one HTTP service and one background worker daemon. JavaScript, styles, images and emoji files are extracted from that exact image and served by a separate static service, so loading them does not start database-connected containers. HTML and APIs remain on Twenty, preserving its runtime configuration and security policy. It does not build Twenty's large development monorepo during deployment.
 
 Vercel Containers, Services and Daemons are beta features. Daemons currently run only in production; a preview deployment cannot run the complete CRM. This deployment deliberately rejects preview runtime startup rather than connect a preview to production customer data or queues.
 
@@ -55,7 +55,7 @@ Both images contain the same runtime scripts. A SHA-256 digest of those scripts 
 
 The worker acquires a PostgreSQL advisory lock, initializes an empty database or upgrades an existing one, flushes the metadata cache, and registers scheduled jobs. It marks that release ready only after every command succeeds, then starts the queue worker. Failed bootstrap stops the worker with an error.
 
-HTTP containers immediately open the platform port and hold initial requests for up to 25 seconds while waiting for the matching readiness marker and native HTTP health check. Requests exceeding that bound receive a private, uncached 503 startup page. The service accepts concurrent requests in the same instance, and native database pools default to two connections to limit pressure on a free shared database. Streaming requests, response cookies, and upgrade connections pass through to Twenty. HTTP containers never run migrations or register scheduled jobs on a cold start.
+HTTP containers immediately open the platform port and hold initial requests for up to 25 seconds while waiting for the matching readiness marker and native HTTP health check. Requests exceeding that bound receive a private, uncached 503 startup page. Native database pools default to two connections to limit pressure on a free shared database. Streaming requests, response cookies, and upgrade connections pass through to Twenty. HTTP containers never run migrations or register scheduled jobs on a cold start. Automatic deployments are disabled for the development branch because full preview workers are unavailable; production deployments remain enabled on `main`.
 
 Deploy an active **Production** release behind the onboarding protection below and inspect both service and daemon logs. A staged `--prod --skip-domain` deployment may not start its daemon until it becomes the active production release; HTTP containers will then keep waiting for bootstrap. Production here selects Vercel's environment; creating the first CRM account and installing the lumber app remain separate steps.
 

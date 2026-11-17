@@ -10,6 +10,10 @@
 !deploy/vercel/certificates/supabase-root-ca-bundle.crt
 !deploy/vercel/lumber-application
 !deploy/vercel/lumber-application/**
+!deploy/vercel/frontend
+!deploy/vercel/frontend/package.json
+!deploy/vercel/frontend/export-front.cjs
+!deploy/vercel/frontend/vercel.json
 
 **/node_modules/**
 **/coverage/**
