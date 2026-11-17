@@ -6,6 +6,8 @@
 !deploy/vercel/Dockerfile.worker
 !deploy/vercel/runtime
 !deploy/vercel/runtime/**
+!deploy/vercel/certificates
+!deploy/vercel/certificates/supabase-root-ca-bundle.crt
 
 **/node_modules/**
 **/coverage/**

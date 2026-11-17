@@ -3,6 +3,7 @@ FROM twentycrm/twenty:v2.58.0@sha256:3f1b5140a2d0ce590462c7636c109ec30fd4008d6f3
 WORKDIR /app/packages/twenty-server
 
 COPY --chown=1000:1000 deploy/vercel/runtime /app/vercel/runtime
+COPY --chown=1000:1000 deploy/vercel/certificates /app/vercel/certificates
 
 ENV NODE_ENV=production \
     PORT=3000 \

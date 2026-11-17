@@ -61,6 +61,94 @@ test('child failures preserve their exit status', async () => {
   assert.match(runtimeProcess.output, /database upgrade/);
 });
 
+for (const [code, category] of [
+  ['MODULE_NOT_FOUND', 'runtime dependency is missing'],
+  ['ERR_MODULE_NOT_FOUND', 'runtime dependency is missing'],
+  ['28P01', 'PostgreSQL authentication failed'],
+  ['42501', 'PostgreSQL permissions are insufficient'],
+  ['3D000', 'PostgreSQL database does not exist'],
+  ['SELF_SIGNED_CERT_IN_CHAIN', 'TLS certificate verification failed'],
+  ['UNABLE_TO_VERIFY_LEAF_SIGNATURE', 'TLS certificate verification failed'],
+  ['ENOTFOUND', 'hostname could not be resolved'],
+  ['ECONNREFUSED', 'connection was refused'],
+  ['ETIMEDOUT', 'connection timed out'],
+  ['EROFS', 'read-only filesystem'],
+]) {
+  test(`known ${code} errors expose only an allowlisted category`, async () => {
+    const runtimeProcess = fakeProcess();
+    const error = new Error(
+      'postgresql://user:secret-password@private-host/database',
+    );
+    error.code = code;
+    error.stack = 'sensitive-stack-data';
+    await runEntrypoint(
+      async () => {
+        throw error;
+      },
+      { runtimeProcess, environment: {} },
+    );
+    assert.ok(runtimeProcess.output.includes(code));
+    assert.ok(runtimeProcess.output.includes(category));
+    for (const secret of [
+      'secret-password',
+      'private-host',
+      'sensitive-stack-data',
+      'postgresql://',
+    ]) {
+      assert.equal(runtimeProcess.output.includes(secret), false);
+    }
+    assert.equal(runtimeProcess.exitCode, 1);
+  });
+}
+
+test('wrapped provider failures are classified without exposing the wrapper or cause message', async () => {
+  const runtimeProcess = fakeProcess();
+  const cause = new Error('certificate-chain-secret');
+  cause.code = 'DEPTH_ZERO_SELF_SIGNED_CERT';
+  const error = new Error('secret outer URL', { cause });
+  await runEntrypoint(
+    async () => {
+      throw error;
+    },
+    { runtimeProcess, environment: {} },
+  );
+  assert.match(runtimeProcess.output, /DEPTH_ZERO_SELF_SIGNED_CERT/);
+  assert.equal(runtimeProcess.output.includes('secret'), false);
+});
+
+test('aggregate connection failures are classified without arbitrary provider codes', async () => {
+  const runtimeProcess = fakeProcess();
+  const cause = new Error('secret connection diagnostics');
+  cause.code = 'EHOSTUNREACH';
+  const error = new AggregateError([cause], 'secret aggregate diagnostics');
+  error.code = 'unknown-secret-code';
+  await runEntrypoint(
+    async () => {
+      throw error;
+    },
+    { runtimeProcess, environment: {} },
+  );
+  assert.match(runtimeProcess.output, /EHOSTUNREACH/);
+  assert.equal(runtimeProcess.output.includes('secret'), false);
+});
+
+test('unknown provider codes and invalid exit status stay private', async () => {
+  const runtimeProcess = fakeProcess();
+  const error = new Error('secret message');
+  error.code = 'ETIMEDOUT-with-secret-suffix';
+  error.exitCode = 'secret-exit-status';
+  error.cause = error;
+  await runEntrypoint(
+    async () => {
+      throw error;
+    },
+    { runtimeProcess, environment: {} },
+  );
+  assert.equal(runtimeProcess.output.includes('secret'), false);
+  assert.equal(runtimeProcess.output.includes('ETIMEDOUT'), false);
+  assert.equal(runtimeProcess.exitCode, 1);
+});
+
 for (const [signal, exitCode] of [
   ['SIGTERM', 143],
   ['SIGINT', 130],
