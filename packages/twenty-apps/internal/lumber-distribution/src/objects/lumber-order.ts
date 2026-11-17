@@ -6,7 +6,7 @@ export default defineObject({
   nameSingular: 'lumberOrder',
   namePlural: 'lumberOrders',
   labelSingular: 'Order',
-  labelPlural: 'Orders',
+  labelPlural: 'Quotes & orders',
   icon: 'IconShoppingCart',
   labelIdentifierFieldMetadataUniversalIdentifier:
     LUMBER_OBJECTS.order.fields.name,

@@ -215,6 +215,43 @@ test('child returns only a safe failure phase when the provider throws private d
   assert.equal(stub.disconnectCount(), 1);
 });
 
+test('child forwards the verified upgrade setting and rejects non-boolean settings', async () => {
+  const stub = processFixture();
+  let installations = 0;
+  await runInstallerChild(
+    {
+      type: 'lumber-installation-request',
+      ...INPUT,
+      preserveWorkspaceSecurity: true,
+    },
+    {
+      runtimeProcess: stub.runtimeProcess,
+      install: async (input) => {
+        assert.equal(input.preserveWorkspaceSecurity, true);
+        installations++;
+        return RESULT;
+      },
+    },
+  );
+  const invalid = processFixture();
+  await runInstallerChild(
+    {
+      type: 'lumber-installation-request',
+      ...INPUT,
+      preserveWorkspaceSecurity: 'true',
+    },
+    {
+      runtimeProcess: invalid.runtimeProcess,
+      install: async () => {
+        installations++;
+        return RESULT;
+      },
+    },
+  );
+  assert.equal(installations, 1);
+  assert.equal(invalid.runtimeProcess.exitCode, 1);
+});
+
 for (const workspaceId of [undefined, 'foreign-invalid-id']) {
   test(`child rejects ${JSON.stringify(workspaceId)} workspace identity before invoking the installer`, async () => {
     const stub = processFixture();

@@ -3,6 +3,7 @@
 const { createRequire } = require('node:module');
 const path = require('node:path');
 const { installationError } = require('./lumber-bundle.cjs');
+const { simplifyLumberNavigation } = require('./lumber-navigation.cjs');
 
 const SERVER_ROOT = '/app/packages/twenty-server';
 const UUID_PATTERN =
@@ -136,6 +137,24 @@ const createLumberOperator = async ({ serverRoot = SERVER_ROOT } = {}) => {
   const { CacheLockService } = fromServer(
     'engine/core-modules/cache-lock/cache-lock.service.js',
   );
+  const { NavigationMenuItemEntity } = fromServer(
+    'engine/metadata-modules/navigation-menu-item/entities/navigation-menu-item.entity.js',
+  );
+  const { NavigationMenuItemService } = fromServer(
+    'engine/metadata-modules/navigation-menu-item/navigation-menu-item.service.js',
+  );
+  const { ObjectMetadataService } = fromServer(
+    'engine/metadata-modules/object-metadata/object-metadata.service.js',
+  );
+  const { ApplicationService } = fromServer(
+    'engine/core-modules/application/application.service.js',
+  );
+  const { belongsToTwentyStandardApp } = fromServer(
+    'engine/metadata-modules/utils/belongs-to-twenty-standard-app.util.js',
+  );
+  const { resolveEffectiveFlatEntityProperty } = fromServer(
+    'engine/metadata-modules/overrides/utils/resolve-effective-flat-entity-property.util.js',
+  );
   const { MetadataEventEmitter } = fromServer(
     'engine/subscriptions/metadata-event/metadata-event-emitter.js',
   );
@@ -162,6 +181,44 @@ const createLumberOperator = async ({ serverRoot = SERVER_ROOT } = {}) => {
       cacheLock: app.get(CacheLockService),
       closeWorkspaceSecurity: (workspaceId) =>
         closeLumberWorkspaceSecurity(workspaceId, securityDependencies),
+      simplifyNavigation: (input) =>
+        simplifyLumberNavigation(input, {
+          navigationRepository: app.get(
+            getRepositoryToken(NavigationMenuItemEntity),
+          ),
+          navigationService: app.get(NavigationMenuItemService),
+          readObjectMetadata: async (workspaceId) => {
+            const { workspaceCustomFlatApplication } = await app
+              .get(ApplicationService)
+              .findWorkspaceTwentyStandardAndCustomApplicationOrThrow({
+                workspaceId,
+              });
+            const objects = await app
+              .get(ObjectMetadataService)
+              .findManyWithinWorkspace(workspaceId);
+            return objects.map((object) => ({
+              ...object,
+              isStandard: belongsToTwentyStandardApp(object),
+              ...Object.fromEntries(
+                ['labelSingular', 'labelPlural'].map((property) => [
+                  property,
+                  resolveEffectiveFlatEntityProperty({
+                    metadataName: 'objectMetadata',
+                    flatEntity: object,
+                    property,
+                    authorContext: {
+                      workspaceCustomApplicationUniversalIdentifier:
+                        workspaceCustomFlatApplication.universalIdentifier,
+                    },
+                  }),
+                ]),
+              ),
+            }));
+          },
+          objectMetadataService: app.get(ObjectMetadataService),
+          withWorkspaceAuthContext,
+          buildSystemAuthContext,
+        }),
       close: async () => {
         try {
           await app.get(MetadataEventEmitter).drain();

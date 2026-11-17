@@ -7,6 +7,7 @@ const {
   loadLumberBundle,
 } = require('./lumber-bundle.cjs');
 const { createLumberOperator } = require('./lumber-operator.cjs');
+const { RETIRED_SHORTCUT_IDENTIFIERS } = require('./lumber-navigation.cjs');
 
 const UUID_PATTERN =
   /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -24,7 +25,12 @@ const isReadyLumberWorkspace = (workspace) =>
   );
 
 const installLumberApplication = async (
-  { bundleDirectory, workspaceId, expectedContentHash },
+  {
+    bundleDirectory,
+    workspaceId,
+    expectedContentHash,
+    preserveWorkspaceSecurity = false,
+  },
   {
     environment = process.env,
     signal,
@@ -44,7 +50,14 @@ const installLumberApplication = async (
       plan?.applicationUniversalIdentifier !== LUMBER_APPLICATION_IDENTIFIER ||
       !Array.isArray(plan.actions) ||
       plan.actions.some(
-        (action) => !['create', 'update'].includes(action?.type),
+        (action) =>
+          !['create', 'update'].includes(action?.type) &&
+          !(
+            action?.type === 'delete' &&
+            action.metadataName === 'navigationMenuItem' &&
+            RETIRED_SHORTCUT_IDENTIFIERS.has(action.universalIdentifier) &&
+            action.cascadedFromUniversalIdentifier == null
+          ),
       )
     ) {
       throw installationError('manifest plan validation');
@@ -55,6 +68,7 @@ const installLumberApplication = async (
     if (
       environment.NODE_ENV !== 'production' ||
       environment.APP_VERSION?.replace(/^v/, '') !== '2.58.0' ||
+      typeof preserveWorkspaceSecurity !== 'boolean' ||
       (workspaceId !== undefined && !UUID_PATTERN.test(workspaceId))
     ) {
       throw installationError(phase);
@@ -130,7 +144,7 @@ const installLumberApplication = async (
           manifest: bundle.manifest,
           workspaceId: workspace.id,
           workspaceCustomApplicationId: workspace.workspaceCustomApplicationId,
-          inferDeletionFromMissingEntities: false,
+          inferDeletionFromMissingEntities: true,
         };
         checkAborted();
         phase = 'manifest plan validation';
@@ -174,7 +188,13 @@ const installLumberApplication = async (
         if (!installed?.id || verification.actions.length !== 0)
           throw installationError(phase);
         checkAborted();
-        await operator.closeWorkspaceSecurity(workspace.id);
+        if (!preserveWorkspaceSecurity)
+          await operator.closeWorkspaceSecurity(workspace.id);
+        phase = 'navigation setup';
+        await operator.simplifyNavigation({
+          workspaceId: workspace.id,
+          applicationId: installed.id,
+        });
         checkAborted();
         return {
           workspaceId: workspace.id,

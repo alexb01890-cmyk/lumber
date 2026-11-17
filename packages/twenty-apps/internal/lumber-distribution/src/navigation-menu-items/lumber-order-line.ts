@@ -5,7 +5,8 @@ export default defineNavigationMenuItem({
   name: 'Order lines',
   icon: 'IconListDetails',
   color: 'blue',
-  position: 4,
+  position: 0,
+  folderUniversalIdentifier: 'edcb212e-9658-4dfd-b3cc-0b175a294ca8',
   type: 'OBJECT',
   targetObjectUniversalIdentifier: 'e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419',
 });

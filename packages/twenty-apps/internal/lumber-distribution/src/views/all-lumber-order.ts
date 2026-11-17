@@ -2,7 +2,7 @@ import { defineView } from 'twenty-sdk/define';
 
 export default defineView({
   universalIdentifier: '6e37dc15-3694-4c7e-8355-593f5d30ab42',
-  name: 'Orders',
+  name: 'Quotes & orders',
   objectUniversalIdentifier: '0afd93ac-a4aa-48b1-877c-730cf3e5f6b0',
   type: 'TABLE',
   icon: 'IconShoppingCart',

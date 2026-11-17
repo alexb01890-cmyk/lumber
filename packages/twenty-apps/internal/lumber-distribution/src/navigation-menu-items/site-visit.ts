@@ -5,7 +5,7 @@ export default defineNavigationMenuItem({
   name: 'Site visits',
   icon: 'IconMapPin',
   color: 'blue',
-  position: 2,
+  position: 4,
   type: 'OBJECT',
   targetObjectUniversalIdentifier: '100c3020-24c2-4089-8bd8-baac4489cadd',
 });

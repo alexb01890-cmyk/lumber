@@ -73,6 +73,7 @@ const fixture = (overrides = {}) => {
     cacheLock: { withLock: async (run) => run() },
     closeWorkspaceSecurity: async (workspaceId) =>
       calls.push(['security', workspaceId]),
+    simplifyNavigation: async (input) => calls.push(['navigation', input]),
     close: async () => calls.push(['close']),
   };
   Object.assign(operator, overrides);
@@ -84,7 +85,7 @@ const fixture = (overrides = {}) => {
   return { calls, workspace, bundle, operator, dependencies };
 };
 
-test('applies the fixed app through native services and preserves missing workspace entities', async () => {
+test('applies the fixed app through native services with only explicitly allowed shortcut retirement', async () => {
   const stub = fixture();
   const result = await installLumberApplication(
     { bundleDirectory: '/bundle' },
@@ -100,6 +101,7 @@ test('applies the fixed app through native services and preserves missing worksp
       'sync',
       'plan',
       'security',
+      'navigation',
       'close',
     ],
   );
@@ -116,7 +118,7 @@ test('applies the fixed app through native services and preserves missing worksp
   assert.equal(
     stub.calls
       .filter(([phase]) => phase === 'sync' || phase === 'plan')
-      .every(([, input]) => input.inferDeletionFromMissingEntities === false),
+      .every(([, input]) => input.inferDeletionFromMissingEntities === true),
     true,
   );
   assert.deepEqual(
@@ -124,6 +126,84 @@ test('applies the fixed app through native services and preserves missing worksp
     Buffer.from('compiled'),
   );
 });
+
+test('a previously installed workspace keeps its current invitation and authentication settings', async () => {
+  const stub = fixture();
+  await installLumberApplication(
+    { bundleDirectory: '/bundle', preserveWorkspaceSecurity: true },
+    stub.dependencies,
+  );
+  assert.equal(
+    stub.calls.some(([phase]) => phase === 'security'),
+    false,
+  );
+  assert.equal(
+    stub.calls.some(([phase]) => phase === 'navigation'),
+    true,
+  );
+});
+
+test('retires only the known redundant sidebar shortcuts while retaining their views and data', async () => {
+  const stub = fixture();
+  const sync = stub.operator.developmentService.syncApplication;
+  let calls = 0;
+  stub.operator.developmentService.syncApplication = async (input) => {
+    const plan = await sync(input);
+    if (++calls < 3)
+      plan.actions.push({
+        type: 'delete',
+        metadataName: 'navigationMenuItem',
+        universalIdentifier: '700774e4-4b33-4fe9-b965-ef76570fdd75',
+      });
+    return plan;
+  };
+  await installLumberApplication(
+    { bundleDirectory: '/bundle' },
+    stub.dependencies,
+  );
+  assert.equal(
+    stub.calls.some(([phase]) => phase === 'sync'),
+    true,
+  );
+});
+
+for (const action of [
+  {
+    type: 'delete',
+    metadataName: 'view',
+    universalIdentifier: '700774e4-4b33-4fe9-b965-ef76570fdd75',
+  },
+  {
+    type: 'delete',
+    metadataName: 'navigationMenuItem',
+    universalIdentifier: WORKSPACE_ID,
+  },
+  {
+    type: 'delete',
+    metadataName: 'navigationMenuItem',
+    universalIdentifier: '700774e4-4b33-4fe9-b965-ef76570fdd75',
+    cascadedFromUniversalIdentifier: WORKSPACE_ID,
+  },
+]) {
+  test(`rejects unrelated or cascading deletion: ${JSON.stringify(action)}`, async () => {
+    const stub = fixture();
+    stub.operator.developmentService.syncApplication = async () => ({
+      applicationUniversalIdentifier: LUMBER_APPLICATION_IDENTIFIER,
+      actions: [action],
+    });
+    await assert.rejects(
+      installLumberApplication(
+        { bundleDirectory: '/bundle' },
+        stub.dependencies,
+      ),
+      /manifest plan validation/,
+    );
+    assert.equal(
+      stub.calls.some(([phase]) => phase === 'upload'),
+      false,
+    );
+  });
+}
 
 test('an existing owned local registration is reused without generating credentials', async () => {
   const stub = fixture({

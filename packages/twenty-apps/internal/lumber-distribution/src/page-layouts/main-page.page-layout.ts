@@ -17,7 +17,7 @@ const CHART_TIME_SETTINGS = {
 
 export default definePageLayout({
   universalIdentifier: MAIN_PAGE_LAYOUT_UNIVERSAL_IDENTIFIER,
-  name: 'Lumber Overview',
+  name: 'Overview',
   type: 'STANDALONE_PAGE',
   tabs: [
     {

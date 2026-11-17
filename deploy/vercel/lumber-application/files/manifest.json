@@ -19,7 +19,7 @@
       "nameSingular": "lumberShipment",
       "namePlural": "lumberShipments",
       "labelSingular": "Shipment lot",
-      "labelPlural": "Shipment lots",
+      "labelPlural": "Shipments",
       "icon": "IconTruckDelivery",
       "labelIdentifierFieldMetadataUniversalIdentifier": "bfbd924d-636b-4f64-96cd-e3c37cd9d7e2",
       "fields": [
@@ -230,7 +230,7 @@
       "nameSingular": "lumberOrder",
       "namePlural": "lumberOrders",
       "labelSingular": "Order",
-      "labelPlural": "Orders",
+      "labelPlural": "Quotes & orders",
       "icon": "IconShoppingCart",
       "labelIdentifierFieldMetadataUniversalIdentifier": "66ab3c90-7dbc-40c9-b639-de336dc5d7ff",
       "fields": [
@@ -2485,7 +2485,7 @@
     },
     {
       "universalIdentifier": "330e41b4-6793-4275-ba64-2ee8d2736369",
-      "name": "Lumber prospects",
+      "name": "Prospects",
       "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
       "type": "TABLE",
       "icon": "IconBuildingSkyscraper",
@@ -2726,7 +2726,7 @@
     },
     {
       "universalIdentifier": "6e37dc15-3694-4c7e-8355-593f5d30ab42",
-      "name": "Orders",
+      "name": "Quotes & orders",
       "objectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0",
       "type": "TABLE",
       "icon": "IconShoppingCart",
@@ -2861,7 +2861,7 @@
     },
     {
       "universalIdentifier": "70c53220-572a-4ade-92a4-cb6d753c697f",
-      "name": "Lumber customers",
+      "name": "Customers",
       "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
       "type": "TABLE",
       "icon": "IconBuildingSkyscraper",
@@ -3066,7 +3066,7 @@
     },
     {
       "universalIdentifier": "8d1e977a-ac55-4050-94f6-6bc86d85576f",
-      "name": "Shipment lots",
+      "name": "Shipments",
       "objectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8",
       "type": "TABLE",
       "icon": "IconTruckDelivery",
@@ -3266,7 +3266,7 @@
     },
     {
       "universalIdentifier": "914cfc5c-b7f2-435e-af33-2d1a0975a5f2",
-      "name": "Lumber suppliers",
+      "name": "Suppliers",
       "objectUniversalIdentifier": "20202020-b374-4779-a561-80086cb2e17f",
       "type": "TABLE",
       "icon": "IconBuildingSkyscraper",
@@ -3874,19 +3874,11 @@
   "viewFields": [],
   "navigationMenuItems": [
     {
-      "universalIdentifier": "0088447e-cede-45a5-850c-1a85c8957709",
-      "name": "Lumber prospects",
-      "icon": "IconBuildingSkyscraper",
-      "position": 12,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "330e41b4-6793-4275-ba64-2ee8d2736369"
-    },
-    {
       "universalIdentifier": "1de15661-6593-4eb8-a1fa-f6a8aa734138",
-      "name": "Orders",
+      "name": "Quotes & orders",
       "icon": "IconShoppingCart",
       "color": "blue",
-      "position": 3,
+      "position": 5,
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "0afd93ac-a4aa-48b1-877c-730cf3e5f6b0"
     },
@@ -3895,7 +3887,7 @@
       "name": "Commissions",
       "icon": "IconPercentage",
       "color": "green",
-      "position": 7,
+      "position": 8,
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "a24350d6-b004-4c0e-bcf7-b30b5c6d3cea"
     },
@@ -3904,40 +3896,16 @@
       "name": "Reorder plans",
       "icon": "IconRepeat",
       "color": "blue",
-      "position": 6,
+      "position": 7,
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "32d05b14-1d3b-49b9-85d5-14f3051d894b"
-    },
-    {
-      "universalIdentifier": "6d72aad3-db26-464e-9d33-b3087d5cccfc",
-      "name": "Commission terms TBD",
-      "icon": "IconPercentage",
-      "position": 11,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "a594ce19-e47a-4235-ab49-f1a3a86aba05"
-    },
-    {
-      "universalIdentifier": "700774e4-4b33-4fe9-b965-ef76570fdd75",
-      "name": "Lumber customers",
-      "icon": "IconBuildingSkyscraper",
-      "position": 13,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "70c53220-572a-4ade-92a4-cb6d753c697f"
-    },
-    {
-      "universalIdentifier": "7024013f-0dc1-49fb-9734-f7fe86ffa981",
-      "name": "Lumber suppliers",
-      "icon": "IconBuildingSkyscraper",
-      "position": 14,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "914cfc5c-b7f2-435e-af33-2d1a0975a5f2"
     },
     {
       "universalIdentifier": "997db24f-62c2-467e-9694-ce87def1884c",
       "name": "Products",
       "icon": "IconBox",
       "color": "blue",
-      "position": 1,
+      "position": 3,
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "dafd6634-2352-4ec8-b3b1-c4b8ed90a686"
     },
@@ -3946,59 +3914,44 @@
       "name": "Order lines",
       "icon": "IconListDetails",
       "color": "blue",
-      "position": 4,
+      "position": 0,
+      "folderUniversalIdentifier": "edcb212e-9658-4dfd-b3cc-0b175a294ca8",
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "e8c6c6a5-cc62-4bbf-be0a-0dc66dcec419"
     },
     {
       "universalIdentifier": "acf8aa3c-1cc5-4959-a219-3c9141eb83f5",
-      "name": "Shipment lots",
+      "name": "Shipments",
       "icon": "IconTruckDelivery",
       "color": "blue",
-      "position": 5,
+      "position": 6,
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "0826c666-a73a-4052-a44a-0853dac469c8"
-    },
-    {
-      "universalIdentifier": "c1e7a4bd-f13e-41e6-a287-ee93b710da09",
-      "name": "Delayed shipments",
-      "icon": "IconTruckDelivery",
-      "position": 9,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "bdb644e6-1d09-49d5-9dae-6d608c13fbbe"
     },
     {
       "universalIdentifier": "c7f34054-af52-4eb6-84cf-ea1efb9043e4",
       "name": "Site visits",
       "icon": "IconMapPin",
       "color": "blue",
-      "position": 2,
+      "position": 4,
       "type": "OBJECT",
       "targetObjectUniversalIdentifier": "100c3020-24c2-4089-8bd8-baac4489cadd"
     },
     {
-      "universalIdentifier": "ead489f7-fd62-4b17-8446-0320202bfa19",
-      "name": "Planned site visits",
-      "icon": "IconMapPin",
-      "position": 8,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "7e82143d-c61f-4823-98a5-10dfbdda165e"
-    },
-    {
       "universalIdentifier": "ecbf120a-5e2c-47b0-b54a-b161757dfdf9",
-      "name": "Lumber Overview",
+      "name": "Overview",
       "icon": "IconChartBar",
-      "position": -1,
+      "position": 0,
       "type": "PAGE_LAYOUT",
       "pageLayoutUniversalIdentifier": "c164fd62-1ea8-4bf1-a176-8ac1adb6658a"
     },
     {
-      "universalIdentifier": "eda1f57b-0d84-4d59-8df5-5a2f48cdb9ac",
-      "name": "Active reorder plans",
-      "icon": "IconRepeat",
-      "position": 10,
-      "type": "VIEW",
-      "viewUniversalIdentifier": "703b129b-9240-4aed-ad6d-3ac6b959afa9"
+      "universalIdentifier": "edcb212e-9658-4dfd-b3cc-0b175a294ca8",
+      "name": "Workspace tools",
+      "icon": "IconSettings",
+      "color": "gray",
+      "position": 100,
+      "type": "FOLDER"
     }
   ],
   "pageLayouts": [
@@ -4262,7 +4215,7 @@
     },
     {
       "universalIdentifier": "c164fd62-1ea8-4bf1-a176-8ac1adb6658a",
-      "name": "Lumber Overview",
+      "name": "Overview",
       "type": "STANDALONE_PAGE",
       "tabs": [
         {

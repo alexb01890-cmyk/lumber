@@ -2,7 +2,7 @@ import { defineView } from 'twenty-sdk/define';
 
 export default defineView({
   universalIdentifier: '70c53220-572a-4ade-92a4-cb6d753c697f',
-  name: 'Lumber customers',
+  name: 'Customers',
   objectUniversalIdentifier: '20202020-b374-4779-a561-80086cb2e17f',
   type: 'TABLE',
   icon: 'IconBuildingSkyscraper',
