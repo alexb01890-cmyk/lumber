@@ -1,12 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": { "codex/lumber-distribution-crm": false }
+  },
   "services": {
     "crm": {
       "root": ".",
       "runtime": "container",
       "entrypoint": "deploy/vercel/Dockerfile.web",
       "functions": {
-        "**": { "maxConcurrency": 256, "memory": 2048 }
+        "deploy/vercel/Dockerfile.web": { "memory": 2048 }
       }
     }
   },
