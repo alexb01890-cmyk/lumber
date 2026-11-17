@@ -1,0 +1,11 @@
+*
+!vercel.json
+!deploy/
+!deploy/vercel/
+!deploy/vercel/**
+
+**/node_modules/**
+**/coverage/**
+**/.env
+**/.env.*
+**/*.local

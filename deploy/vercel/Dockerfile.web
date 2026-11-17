@@ -1,0 +1,23 @@
+FROM twentycrm/twenty:v2.58.0@sha256:3f1b5140a2d0ce590462c7636c109ec30fd4008d6f31dd5e7f3149b4f8a0dbb4
+
+WORKDIR /app/packages/twenty-server
+
+COPY --chown=1000:1000 deploy/vercel/runtime /app/vercel/runtime
+
+ENV NODE_ENV=production \
+    PORT=3000 \
+    NODE_PORT=3000 \
+    DISABLE_DB_MIGRATIONS=true \
+    DISABLE_CRON_JOBS_REGISTRATION=true \
+    LOGIC_FUNCTION_TYPE=LOCAL \
+    STORAGE_TYPE=S_3 \
+    IS_BILLING_ENABLED=false \
+    IS_MULTIWORKSPACE_ENABLED=false \
+    APPLICATION_LOG_DRIVER=CONSOLE
+
+USER 1000
+
+EXPOSE 3000
+
+ENTRYPOINT ["node", "/app/vercel/runtime/start-web.cjs"]
+CMD []

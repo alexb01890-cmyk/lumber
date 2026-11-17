@@ -32,6 +32,10 @@ twenty app apply --remote dev
 
 For a production workspace, review the plan and get the workspace owner's approval before applying changes.
 
+## Vercel hosting
+
+Use the [Vercel deployment guide](../../../../deploy/vercel/README.md) from the repository root. The app is an extension installed after the CRM workspace is running; its own folder is not a Vercel website root.
+
 ## No workspace yet
 
 A repository alone does not run Twenty. Choose a managed Twenty workspace or self-host Twenty with persistent PostgreSQL, Redis and file storage using the [official self-hosting instructions](https://docs.twenty.com/developers/self-host/capabilities/docker-compose). Then install this app into that workspace.

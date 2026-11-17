@@ -2,6 +2,8 @@
 
 This repository includes a supplier-direct lumber sales app for Twenty CRM. It adds Florida customer and supplier tracking, site visits and product samples, orders and delivery lots, recurring-business planning, and commission tracking.
 
+For Vercel, follow the [deployment guide](./deploy/vercel/README.md). The root deployment runs Twenty plus its background worker and requires managed PostgreSQL, Redis and S3-compatible file storage.
+
 Start with the [Lumber Distribution app](./packages/twenty-apps/internal/lumber-distribution/README.md) for setup, the sales workflow, and the current scope. A running Twenty workspace is required to use it; cloning this repository does not install the app.
 
 Business branding, wood specifications, service regions, and commission terms remain configurable. The original Twenty project documentation follows below.
