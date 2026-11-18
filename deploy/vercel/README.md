@@ -34,6 +34,7 @@ An always-running worker consumes Vercel's provisioned-memory allowance even whi
 | `PG_POOL_IDLE_TIMEOUT_MS` | `10000` to release idle database connections promptly. |
 | `PG_POOL_ALLOW_EXIT_ON_IDLE` | `true`. |
 | `REDIS_URL` | Native `rediss://` connection string for managed Redis (or `redis://` on a trusted private network). |
+| `LUMBER_REDIS_URL` | Optional Secret overriding both native cache and queue connections when changing providers. Accepts `rediss://` and encrypted Aiven `valkeys://` service URIs. Leave unset to retain the existing provider. |
 | `ENCRYPTION_KEY` | One generated secret shared by API and worker; preserve it across deployments. |
 | `STORAGE_S3_NAME` | Private bucket name. |
 | `STORAGE_S3_REGION` | Bucket/provider region. |
@@ -50,6 +51,16 @@ An always-running worker consumes Vercel's provisioned-memory allowance even whi
 The images set remote S3 storage, enable the trusted lumber calculation functions, and disable Twenty cloud billing and multi-workspace signup. The worker receives `SERVER_INTERNAL_URL` through a Vercel service binding; do not replace that binding with a hardcoded preview URL. The HTTP service uses its own loopback URL for internal requests.
 
 Both images contain the same runtime scripts. A SHA-256 digest of those scripts and the pinned image identifies their bootstrap readiness, scoped to the Twenty version and public origin. This remains consistent when Vercel gives its service and daemon different deployment metadata; changing the runtime scripts creates a new readiness identity.
+
+The readiness identity also includes the cache and queue endpoints and database paths, without credentials. Moving Redis to another provider requires fresh cache initialization and cron registration; rotating a password alone does not change the identity.
+
+### Recover from an exhausted Redis allowance
+
+The optional `LUMBER_REDIS_URL` Secret selects a replacement for both cache and queues. It avoids editing integration-managed variables, preserves the original connection for rollback and pending-job review, and prevents the API and worker from using different queue providers. An invalid override fails startup rather than falling back silently. TLS certificate and hostname verification remain enabled.
+
+For a free testing service, [Aiven for Valkey](https://aiven.io/docs/products/valkey/concepts/valkey-free-tier) offers a single-node 1 GB RAM plan without a credit card or time limit. New services use publicly trusted TLS certificates and default to `noeviction`. It has resource limits and no production SLA. Create the **Free** plan, wait for **Running**, and copy its Service URI into `LUMBER_REDIS_URL` as a Production Secret in Vercel. The runtime converts the `valkeys://` protocol to the Redis client's encrypted `rediss://` protocol without changing credentials. This service is provisioned directly with Aiven; it is not a Vercel Marketplace resource.
+
+Deploy the production release with the saved Secret, then resume the worker and verify bootstrap, app installation, login and a record round-trip. Keep the old Redis resource: switching endpoints does not migrate jobs left in its queues. Review or recover those jobs before declaring background work reconciled. Customer, order and commission records remain in PostgreSQL; storage credentials and encryption keys must not change during this switch.
 
 ## Database bootstrap and startup
 

@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { startWeb } = require('../runtime/start-web.cjs');
-const { getRuntimeRelease } = require('../runtime/runtime-release.cjs');
+const { validateEnvironment } = require('../runtime/validate-environment.cjs');
 const { validEnvironment } = require('./fixtures/valid-environment.cjs');
 
 test('public listener opens before bootstrap and routes only after the private API is healthy', async () => {
@@ -28,7 +28,10 @@ test('public listener opens before bootstrap and routes only after the private A
       },
       wait: async (receivedClient, scope) => {
         assert.equal(receivedClient, client);
-        assert.equal(scope.deploymentId, getRuntimeRelease());
+        assert.equal(
+          scope.deploymentId,
+          validateEnvironment(validEnvironment(), 'worker').scope.deploymentId,
+        );
         calls.push('database ready');
       },
       run: (command, args, options) => {
