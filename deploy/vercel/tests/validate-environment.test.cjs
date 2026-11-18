@@ -3,7 +3,6 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { validateEnvironment } = require('../runtime/validate-environment.cjs');
-const { getRuntimeRelease } = require('../runtime/runtime-release.cjs');
 const { validEnvironment } = require('./fixtures/valid-environment.cjs');
 
 test('valid web environment separates the platform listener from the private API and temporary scratch', () => {
@@ -31,6 +30,134 @@ test('worker preserves its private service binding', () => {
     validateEnvironment(input, 'worker').environment.SERVER_INTERNAL_URL,
     input.SERVER_INTERNAL_URL,
   );
+});
+
+for (const role of ['web', 'worker']) {
+  for (const protocol of ['rediss', 'valkeys']) {
+    test(`${role} selects one encrypted ${protocol} replacement for cache and queues`, () => {
+      const input = {
+        ...validEnvironment(),
+        REDIS_QUEUE_URL: 'rediss://old-queue.example.test:6379',
+        LUMBER_REDIS_URL: `${protocol}://default:encoded%40password@new-cache.example.test:23790/0`,
+      };
+      const original = { ...input };
+      const { environment } = validateEnvironment(input, role);
+      assert.equal(
+        environment.REDIS_URL,
+        'rediss://default:encoded%40password@new-cache.example.test:23790/0',
+      );
+      assert.equal(environment.REDIS_QUEUE_URL, environment.REDIS_URL);
+      assert.deepEqual(input, original);
+    });
+  }
+}
+
+test('a replacement works without credentials for the old provider', () => {
+  const input = {
+    ...validEnvironment(),
+    LUMBER_REDIS_URL: 'valkeys://default:password@new-cache.example.test:23790',
+  };
+  delete input.REDIS_URL;
+  assert.equal(
+    validateEnvironment(input, 'worker').environment.REDIS_QUEUE_URL,
+    'rediss://default:password@new-cache.example.test:23790',
+  );
+});
+
+test('without an override, an explicitly separate queue database is preserved', () => {
+  const input = {
+    ...validEnvironment(),
+    REDIS_QUEUE_URL: 'rediss://separate-queue.example.test:6379',
+  };
+  const { environment } = validateEnvironment(input, 'worker');
+  assert.equal(environment.REDIS_URL, input.REDIS_URL);
+  assert.equal(environment.REDIS_QUEUE_URL, input.REDIS_QUEUE_URL);
+});
+
+for (const value of [
+  '',
+  'redis://user:private-credential@provider.example.test:6379',
+  'valkey://user:private-credential@provider.example.test:6379',
+  'https://user:private-credential@provider.example.test',
+]) {
+  test(`rejects an invalid or unencrypted override without falling back: ${value.split(':')[0]}`, () => {
+    assert.throws(
+      () =>
+        validateEnvironment(
+          { ...validEnvironment(), LUMBER_REDIS_URL: value },
+          'web',
+        ),
+      (error) => {
+        assert.equal(error.code, 'VERCEL_CONFIGURATION');
+        assert.doesNotMatch(
+          error.stack,
+          /private-credential|provider\.example\.test/,
+        );
+        return true;
+      },
+    );
+  });
+}
+
+test('moving Redis or its queue invalidates bootstrap readiness, while rotating a password preserves it', () => {
+  const input = {
+    ...validEnvironment(),
+    LUMBER_REDIS_URL:
+      'rediss://default:first-password@provider.example.test:23790/0',
+  };
+  const identity = validateEnvironment(input, 'worker').scope.deploymentId;
+  assert.equal(
+    validateEnvironment(
+      {
+        ...input,
+        LUMBER_REDIS_URL: input.LUMBER_REDIS_URL.replace(
+          'first-password',
+          'rotated-password',
+        ),
+      },
+      'web',
+    ).scope.deploymentId,
+    identity,
+  );
+  assert.notEqual(
+    validateEnvironment(
+      {
+        ...input,
+        LUMBER_REDIS_URL: input.LUMBER_REDIS_URL.replace(
+          'provider.example.test',
+          'replacement.example.test',
+        ),
+      },
+      'worker',
+    ).scope.deploymentId,
+    identity,
+  );
+  assert.notEqual(
+    validateEnvironment(
+      {
+        ...input,
+        LUMBER_REDIS_URL: input.LUMBER_REDIS_URL.replace('/0', '/1'),
+      },
+      'worker',
+    ).scope.deploymentId,
+    identity,
+  );
+  const separate = {
+    ...validEnvironment(),
+    REDIS_QUEUE_URL: 'rediss://queue.example.test:6379/0',
+  };
+  assert.notEqual(
+    validateEnvironment(separate, 'worker').scope.deploymentId,
+    validateEnvironment(
+      {
+        ...separate,
+        REDIS_QUEUE_URL: 'rediss://new-queue.example.test:6379/0',
+      },
+      'worker',
+    ).scope.deploymentId,
+  );
+  assert.match(identity, /^[a-f0-9]{64}$/);
+  assert.doesNotMatch(identity, /provider|password/);
 });
 
 for (const name of [
@@ -128,7 +255,7 @@ test('readiness scope contains the runtime release and public origin', () => {
   assert.deepEqual(validateEnvironment(input, 'web').scope, {
     serverUrl: 'https://lumber.example.com',
     runtimeVersion: '2.58.0',
-    deploymentId: getRuntimeRelease(),
+    deploymentId: validateEnvironment(input, 'worker').scope.deploymentId,
   });
 });
 

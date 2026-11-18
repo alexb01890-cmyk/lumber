@@ -1,5 +1,6 @@
 'use strict';
 
+const { createHash } = require('node:crypto');
 const { getRuntimeRelease, RUNTIME_VERSION } = require('./runtime-release.cjs');
 
 const validateEnvironment = (input, role) => {
@@ -15,10 +16,10 @@ const validateEnvironment = (input, role) => {
     }
     return value.trim();
   };
-  const url = (name, protocols) => {
+  const url = (name, protocols, value = required(name)) => {
     let parsed;
     try {
-      parsed = new URL(required(name));
+      parsed = new URL(value);
     } catch {
       fail(`Set ${name} to a valid URL.`);
     }
@@ -36,8 +37,34 @@ const validateEnvironment = (input, role) => {
     );
   }
   url('PG_DATABASE_URL', ['postgres:', 'postgresql:']);
-  url('REDIS_URL', ['redis:', 'rediss:']);
-  if (input.REDIS_QUEUE_URL) url('REDIS_QUEUE_URL', ['redis:', 'rediss:']);
+  const hasRedisOverride = input.LUMBER_REDIS_URL !== undefined;
+  const redisVariable = hasRedisOverride ? 'LUMBER_REDIS_URL' : 'REDIS_URL';
+  const redisUrl = hasRedisOverride
+    ? required(redisVariable).replace(/^valkeys:/, 'rediss:')
+    : required(redisVariable);
+  const parsedRedis = url(
+    redisVariable,
+    hasRedisOverride ? ['rediss:'] : ['redis:', 'rediss:'],
+    redisUrl,
+  );
+  const redisQueueUrl = hasRedisOverride ? redisUrl : input.REDIS_QUEUE_URL;
+  const parsedQueue = redisQueueUrl
+    ? url('REDIS_QUEUE_URL', ['redis:', 'rediss:'], redisQueueUrl)
+    : parsedRedis;
+  // A replacement queue needs cron registration even when the runtime source is unchanged.
+  const deploymentId = createHash('sha256')
+    .update(getRuntimeRelease())
+    .update(
+      JSON.stringify(
+        [parsedRedis, parsedQueue].map((connection) => [
+          connection.protocol,
+          connection.hostname,
+          connection.port || '6379',
+          connection.pathname || '/0',
+        ]),
+      ),
+    )
+    .digest('hex');
   const publicUrl = url('SERVER_URL', ['http:', 'https:']);
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(
     publicUrl.hostname,
@@ -84,6 +111,8 @@ const validateEnvironment = (input, role) => {
     fail('PORT must be an integer from 1 to 65535.');
   const environment = {
     ...input,
+    REDIS_URL: redisUrl,
+    ...(redisQueueUrl !== undefined && { REDIS_QUEUE_URL: redisQueueUrl }),
     SERVER_URL: publicUrl.origin,
     NODE_ENV: 'production',
     NODE_PORT: String(port),
@@ -105,7 +134,7 @@ const validateEnvironment = (input, role) => {
     scope: {
       serverUrl: publicUrl.origin,
       runtimeVersion: RUNTIME_VERSION,
-      deploymentId: getRuntimeRelease(),
+      deploymentId,
     },
   };
 };
